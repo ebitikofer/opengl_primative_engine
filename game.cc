@@ -189,11 +189,6 @@ void character() {
   object(mv, model_view, mv_pos.x + 0.5 * cos((theta + 90) * M_PI/180), mv_pos.y - 0.375, mv_pos.z + 0.5 * sin((theta + 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
   object(mv, model_view, mv_pos.x + 0.25 * cos((theta - 90) * M_PI/180), mv_pos.y - 1.5, mv_pos.z + 0.25 * sin((theta - 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
   object(mv, model_view, mv_pos.x + 0.25 * cos((theta + 90) * M_PI/180), mv_pos.y - 1.5, mv_pos.z + 0.25 * sin((theta + 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
- }
-
- void hud() {
-   object(mv, model_view, mv_pos.x + (radius - 1) * cos((theta - 30) * M_PI/180) * cos((phi - 30) * M_PI/180), mv_pos.y + (radius - 1) * sin((phi - 30) * M_PI/180), mv_pos.z + (radius - 1) * sin((theta - 30) * M_PI/180) * cos((phi - 30) * M_PI/180), LENS_W, LENS_H, LENS_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, phi, 0, 0, 0); // translate down half of the object
-   object(mv, model_view, mv_pos.x + (radius - 1) * cos((theta - 30) * M_PI/180) * cos((phi - 30) * M_PI/180), mv_pos.y + (radius - 1) * sin((phi - 30) * M_PI/180), mv_pos.z + (radius - 1) * sin((theta - 30) * M_PI/180) * cos((phi - 10) * M_PI/180), LENS_W, LENS_H, LENS_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, phi, 0, 0, 0); // translate down half of the object
 }
 
 void door() {

@@ -195,18 +195,6 @@ color4 sp2 = light2_specular * material_specular;
 
 std::string score_text = "0";
 
-// void part() {
-//     mvstack.push( model_view );
-//
-//     mat4 instance = (Translate( 0.0, 0.5 * PART_HEIGHT, 0.0 ) *
-// 		     Scale( PART_WIDTH, PART_HEIGHT, PART_WIDTH ) );
-//
-//     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-//     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-//
-//     model_view = mvstack.pop();
-// }
-
 void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, GLfloat r, GLfloat g, GLfloat b, int pitch, int yaw, int roll, int sl, int st, int type) {
 
   if (hurt) {
