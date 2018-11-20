@@ -4,13 +4,25 @@
 #include <Angel.h>
 #include <chrono>
 #include <random>
+#include <assert.h>
+#include "matstack.h"
+#include "primitives.h"
+#include "object.h"
+#include "input.h"
 
 // Screen dimensions
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 600
 
+#define SKY_R 0.05
+#define SKY_G 0.0
+#define SKY_B 0.1
+
+#define COLOR_SKY 1
+//   vec3(0.8, 1.0, 1.0),
+
 // Drawing
-#define DRAW_DISTANCE 20.0
+#define DRAW_DISTANCE 69.0
 
 // Trig
 #ifndef M_PI
@@ -22,6 +34,7 @@
 #define RATE_CAMERA_V	2
 
 #define NUM_OBJECTS	44
+#define NUM_BULLETS 100
 #define NUM_DOORS	11
 #define NUM_BOOKCASE	10
 #define NUM_ENEMIES	4
@@ -34,25 +47,14 @@
 #define NUM_PICKUPS	4
 #define NUM_ROOMS 10
 
+#define NUM_PARTS 10
+
+MatrixStack  mvstack;
+Object model[NUM_PARTS];
+
 enum cardinal{ north, south, east, west };
 
-const int NumVertices = 36; // (6 faces)(2 triangles/face)(3 vertices/triangle)
-const int NumNodes = 11;
-const int NumAngles = 11;
-
-const int NumTimesToSubdivide = 5;
-const int NumTriangles        = 4096;  // (4 faces)^(NumTimesToSubdivide + 1)
-const int NumVertices2        = 3 * NumTriangles;
-
-
-typedef Angel::vec4 point4;
-typedef Angel::vec4 color4;
-
-point4 points[NumVertices];
-color4 colors[NumVertices];
-
-point4 points2[NumVertices2];
-vec4   normals[NumVertices2];
+bool quit;
 
 GLUquadricObj *qobj;  // For drawing cylinders
 
@@ -72,7 +74,7 @@ mat4 p, mv, cv, pv;   // shader variables
 vec4 cc;
 
 // Globals to control moving around a scene.
-vec3 mv_pos = vec3(-37.5, 0.0, 30.0);
+vec3 mv_pos = vec3(-37.5, 5.0, 30.0);
 vec3 mv_vel = vec3(0.0, 0.0, 0.0);
 // vec3(-50.0, 0.0, 45.0); // Start at door
 
@@ -111,8 +113,15 @@ bool z_die[NUM_ZOMBIES] = { false };
 
 GLfloat l = 0.0;
 GLfloat r = 0.0;
+GLfloat u = 0.0;
+GLfloat d = 0.0;
 GLfloat f = 0.0;
 GLfloat b = 0.0;
+
+bool collider[6] = { false };
+
+bool jump = false,
+     fall = false;
 
 float red = 0.0, green = 0.5, blue = 1.0, color_a_pink = 0.0;
 
@@ -121,17 +130,9 @@ vec3 book_colors[30] = { vec3(0.0, 0.0, 0.0) };
 // Title bar modifiers
 std::string title_bar;
 
-int Index = 0;        // Global to keep track of what vertex we are setting.
-
-bool key_buffer[256] = { false };
-bool spec_buffer[256] = { false };
-
-static int mouse_button;
-bool changed = false;
-
 bool display_bool = false;
 
-bool death = false, hallucinate = false;
+bool death = false, hurt = false, hallucinate = false;
 
 // Random
 uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -192,138 +193,30 @@ color4 ap2 = light2_ambient * material_ambient;
 color4 dp2 = light2_diffuse * material_diffuse;
 color4 sp2 = light2_specular * material_specular;
 
-// color4 vertex_colors[8] = {
+std::string score_text = "0";
+
+// void part() {
+//     mvstack.push( model_view );
 //
-//   color4(0.0, 0.0, 0.0, 1.0),  // black
-//   color4(1.0, 0.0, 0.0, 1.0),  // red
-//   color4(1.0, 1.0, 0.0, 1.0),  // yellow
-//   color4(0.0, 1.0, 0.0, 1.0),  // green
-//   color4(0.0, 0.0, 1.0, 1.0),  // blue
-//   color4(1.0, 0.0, 1.0, 1.0),  // magenta
-//   color4(1.0, 1.0, 1.0, 1.0),  // white
-//   color4(0.0, 1.0, 1.0, 1.0)   // cyan
+//     mat4 instance = (Translate( 0.0, 0.5 * PART_HEIGHT, 0.0 ) *
+// 		     Scale( PART_WIDTH, PART_HEIGHT, PART_WIDTH ) );
 //
-// };
-
-color4 vertex_colors[8] = {
-
-  color4(0.9, 0.9, 0.9, 1.0),  // black
-  color4(1.0, 1.0, 1.0, 1.0),  // white
-  color4(0.9, 0.9, 0.9, 1.0),  // black
-  color4(1.0, 1.0, 1.0, 1.0),  // white
-  color4(0.9, 0.9, 0.9, 1.0),  // black
-  color4(1.0, 1.0, 1.0, 1.0),  // white
-  color4(0.9, 0.9, 0.9, 1.0),  // black
-  color4(1.0, 1.0, 1.0, 1.0),  // white
-
-};
-
-point4 vertices[8] = {
-
-  point4(-0.5, -0.5,  0.5, 1.0),
-  point4(-0.5,  0.5,  0.5, 1.0),
-  point4( 0.5,  0.5,  0.5, 1.0),
-  point4( 0.5, -0.5,  0.5, 1.0),
-  point4(-0.5, -0.5, -0.5, 1.0),
-  point4(-0.5,  0.5, -0.5, 1.0),
-  point4( 0.5,  0.5, -0.5, 1.0),
-  point4( 0.5, -0.5, -0.5, 1.0)
-
-};
-
-// MyQuad generates two triangles for each face and assigns colors to the vertices
-void quad(int a, int b, int c, int d) {
-
-  colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
-  colors[Index] = vertex_colors[b]; points[Index] = vertices[b]; Index++;
-  colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
-  colors[Index] = vertex_colors[a]; points[Index] = vertices[a]; Index++;
-  colors[Index] = vertex_colors[c]; points[Index] = vertices[c]; Index++;
-  colors[Index] = vertex_colors[d]; points[Index] = vertices[d]; Index++;
-
-}
-
-// generate 12 triangles: 36 vertices and 36 colors
-void cube() {
-
-  Index = 0;
-
-  quad(1, 0, 3, 2);
-  quad(2, 3, 7, 6);
-  quad(3, 0, 4, 7);
-  quad(6, 5, 1, 2);
-  quad(4, 5, 6, 7);
-  quad(5, 4, 0, 1);
-
-}
-
-void triangle(const point4& a, const point4& b, const point4& c)
-{
-  normals[Index] = a;  normals[Index].w=0.0;  points2[Index] = a;  Index++;
-  normals[Index] = b;  normals[Index].w=0.0;  points2[Index] = b;  Index++;
-  normals[Index] = c;  normals[Index].w=0.0;  points2[Index] = c;  Index++;
-}
-
-
-point4 unit(const point4& p)
-{
-  float len = p.x*p.x + p.y*p.y + p.z*p.z;
-
-  point4 t;
-  if (len > DivideByZeroTolerance) {
-    t = p / sqrt(len);
-    t.w = 1.0;
-  }
-
-  return t;
-}
-
-void divide_triangle(const point4& a, const point4& b,
-		     const point4& c, int count)
-{
-  if (count > 0) {
-    point4 v1 = unit(a + b);
-    point4 v2 = unit(a + c);
-    point4 v3 = unit(b + c);
-    divide_triangle( a, v1, v2, count - 1);
-    divide_triangle( c, v2, v3, count - 1);
-    divide_triangle( b, v3, v1, count - 1);
-    divide_triangle(v1, v3, v2, count - 1);
-  }
-  else {
-    triangle(a, b, c);
-  }
-}
-
-
-void tetrahedron(int count)
-{
-
-  Index = 0;
-
-  point4 v[4] = {
-    vec4(0.0, 0.0, 1.0, 1.0),
-    vec4(0.0, 0.942809, -0.333333, 1.0),
-    vec4(-0.816497, -0.471405, -0.333333, 1.0),
-    vec4(0.816497, -0.471405, -0.333333, 1.0)
-  };
-
-  divide_triangle(v[0], v[1], v[2], count);
-  divide_triangle(v[3], v[2], v[1], count);
-  divide_triangle(v[0], v[3], v[1], count);
-  divide_triangle(v[0], v[2], v[3], count);
-}
-
+//     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
+//     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
 //
+//     model_view = mvstack.pop();
+// }
+
 void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, GLfloat r, GLfloat g, GLfloat b, int pitch, int yaw, int roll, int sl, int st, int type) {
 
-  if (death) {
+  if (hurt) {
     ap = light_ambient * vec4(r, g, b, 1.0);
     dp = light_diffuse * vec4(r, g, b, 1.0);
     sp = light_specular * vec4(r, g, b, 1.0);
     ap2 = light2_ambient * vec4(1.0, 0.0, 0.0, 1.0);
     dp2 = light2_diffuse * vec4(1.0, 0.0, 0.0, 1.0);
     sp2 = light2_specular * vec4(1.0, 0.0, 0.0, 1.0);
+    hurt = false;
   } else if (hallucinate) {
     color_a_pink += 0.001;
     red = sin(color_a_pink*M_PI/180/2);
@@ -343,7 +236,6 @@ void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloa
     dp2 = light2_diffuse * vec4(r, g, b, 1.0);
     sp2 = light2_specular * vec4(r, g, b, 1.0);
   }
-
 
     glUniform4fv(ambient_product, 1, ap);
     glUniform4fv(diffuse_product, 1, dp);
@@ -373,25 +265,173 @@ void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloa
           glUniform1f( enable, 1.0 );
           glDrawArrays( GL_TRIANGLES, NumVertices, NumVertices2 );
         glUniform4fv(Material_Emiss, 1, emissive_off); break;
+      case 4:
+        glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
+        glUniform1f( enable, 0.0 );
+        glDrawArrays( GL_TRIANGLES, 0, NumVertices / 6 ); break;
 
     };
 
 }
 
-void collision(GLfloat &x, GLfloat y, GLfloat &z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result) {
-  if (x - w / 2 < loc.x + size.x / 2 &&
-      x + w / 2 > loc.x - size.x / 2 &&
-      z - d / 2 < loc.z + size.z / 2 &&
-      z + d / 2 > loc.z - size.z / 2 ) {
+void collision(GLfloat &x, GLfloat &y, GLfloat &z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result) {
+  //
+  // //loop through all the normals
+  // foreach normal in allNormals
+  // {
+  // 	//projection might be a for loop over one model’s vertices simply getting max and min value of dot(vertex, normal)
+  // 	intervalA = projection(objectA, normal);
+  // 	intervalB = projection(objectB, normal);
+  //
+  // 	//from this point on take first object as moving and the second one as static
+  // 	//calculate the velocity of moving object
+  // 	finalVelocity = velocityA-velocityB;
+  //
+  // 	//in order to prevent tunneling we need to expand the intervals by the model velocities - optimization
+  // 	//if the velocity is > 0 then we expand it to the right and vice versa
+  // 	if (finalVelocity > 0.0f)
+  // 	    velocityIntervalA.end += intervalA.end + finalVelocity;
+  // 	else
+  // 	    velocityIntervalA.start += intervalB.start + finalVelocity;
+  //
+  // 	//if the velocity expanded intervals overlap, test the times
+  // 	if (velocityIntervalA.start <= intervalB.end && intervalB.start <= velocityIntervalA.end)
+  // 	{
+  // 	    //we need the time intervals of overlap and find out if they overlap with each other :D
+  // 	    //we have multiple time intervals, let's take the latest entry time and the earliest leave time, if maxEntry collision
+  //
+  // 	    //it's calculated for one frame and since the velocity says how much the object moves in one frame, max time is 1 min is 0
+  // 	    entry = 0.0f;
+  // 	    leave = 1.0f;
+  // 	    amount = 0.0;
+  //
+  // 	    if (intervalA.end <= intervalB.start)
+  // 	    {
+  // 		//interval A is going away from interval B, no possible collision
+  // 		if (finalVelocity <= 0.0f)
+  // 		    return res;
+  // 		//calculate the time of entering and leaving the other interval, t=s/v
+  // 		entry = absVal((intervalB.start - intervalA.end)/finalVelocity);
+  // 		leave = absVal((intervalB.end - intervalA.start)/finalVelocity);
+  // 	    }
+  // 	    //interval B is on the left
+  // 	    else if (intervalB.end <= intervalA.start)
+  // 	    {
+  // 		if (finalVelocity >=0.0f)
+  // 		    return res;
+  // 		entry = absVal((intervalA.start - intervalB.end)/finalVelocity);
+  // 		leave = absVal((intervalA.end - intervalB.start)/finalVelocity);
+  // 	    }
+  // 	    //intervals already overlap
+  // 	    else
+  // 	    {
+  // 		//deciding how do the overlap
+  // 		if (intervalA.start <= intervalB.start)
+  // 		{
+  // 		    leave = absVal((intervalB.end - intervalA.start)/finalVelocity);
+  // 		    amount = intervalA.end - intervalB.start;
+  // 		}
+  // 		else
+  // 		{
+  // 		    leave = absVal((intervalA.end - intervalB.start)/finalVelocity);
+  // 		    amount = intervalB.end - intervalA.start;
+  // 		}
+  // 	    }
+  //
+  // 	    //here we can leave if the collision happens in the future frames (time is higher than max time of the frame = 1)
+  // 	    if (entry > 1.0f)
+  // 		return;
+  //
+  //
+  // 	    //save max and min of overlap borders
+  // 	    if (maxEntry < entry)
+  // 	    {
+  // 		maxEntry = entry;
+  // 		minAmout = amount;
+  // 		collisionNormal = normal;
+  // 	    }
+  //       	    //this is the case of overlap, we can use the amount to push the objects out of each other
+  // 	    else if (amount < minAmount)
+  // 	    {
+  // 		minAmount = amount;
+  // 		overlapNormal = normal;
+  // 	    }
+  // 	    if (minLeave >= leave)
+  // 		minLeave = leave;
+  //
+  // 	}
+  // 	//if they don't overlap then we have found the separating axis (current normal) and we can say there is no collision
+  // 	else
+  // 	    return;
+  // 	}
+  //
+  // 	//if there is a time interval that lies inside all the found ones, collision happened
+  // 	if (minLeave>=maxEntry)
+  // 	    foundInterval = true;
+
+  /////physics
+
+
+//
+// //to keep the track of in-frame time <0.0; 1.0>
+// left = 1.0;
+// elapsed = 1.0;
+// end = false;
+//
+// //gravity etc.
+// applyEnviromentals();
+//
+// while(!end)
+// {
+// 	findCollisions();
+// 	//the physics will set elapsed something greater than 1.0 if the collision happens in the next frame
+// 	//physics module also changes the velocity vectors of the objects according to the collision responses
+// 	elapsed = solvePhysics(left);
+//
+// 	if (elapsed > 1.0)
+// 		break;
+//
+// 	//move the objects (according to their velocities, some might be modified by the physics solving)
+// 	moveObjects(elapsed);
+// 	//octree update
+// 	rebuildTree();
+// 	left -= elapsed;
+// }
+// //move the objects to the end of the frame
+// moveObjects(left);
+// rebuildTree();
+
+
+
+  // var length:Number = box2.x - box1.x;
+  // var phw = ;
+  // var ohw = ;
+  //
+  // var gap_between_boxes:Number = length - half_width_box1 - half_width_box2;
+  // if(gap_between_boxes > 0) trace("It's a big gap between boxes")
+  // else if(gap_between_boxes == 0) trace("Boxes are touching each other")
+  // else if(gap_between_boxes < 0) trace("Boxes are penetrating each other")
+
+  if (x - w/2 < loc.x + size.x/2 &&
+      x + w/2 > loc.x - size.x/2 &&
+      y - h/2 < loc.y + size.y/2 &&
+      y + h/2 > loc.y - size.y/2 &&
+      z - d/2 < loc.z + size.z/2 &&
+      z + d/2 > loc.z - size.z/2 ) {
     result = true;
+    collider[1] = true;
     l = (loc.x + size.x / 2) - (x - w / 2);
     r = (x + w / 2) - (loc.x - size.x / 2);
+    u = (loc.y + size.y / 2) - (y - h / 2);
+    d = (y + h / 2) - (loc.y - size.y / 2);
     f = (loc.z + size.z / 2) - (z - d / 2);
     b = (z + d / 2) - (loc.z - size.z / 2);
-    if (l < f && l < b && l < r) { x += l; }
-    else if (r < f && r < b && r < l) { x -= r; }
-    else if (f < b && f < l && f < r) { z += f; }
-    else if (b < f && b < l && b < r) { z -= b; }
+         if (l < f && l < b && l < u && l < d && l < r) { x += l; mv_vel.x = 0.0; }
+    else if (r < f && r < b && r < u && r < d && r < l) { x -= r; mv_vel.x = 0.0; }
+    else if (u < f && u < b && u < l && u < r && u < d) { y += u; mv_vel.y = 0.0; }
+    else if (d < f && d < b && d < l && d < r && d < u) { y -= d; mv_vel.y = 0.0; }
+    else if (f < u && f < d && f < l && f < r && f < b) { z += f; mv_vel.z = 0.0; }
+    else if (b < u && b < d && b < l && b < r && b < f) { z -= b; mv_vel.z = 0.0; }
   } else {
     result = false;
   }
@@ -407,20 +447,6 @@ void proximity(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d,
     result = false;
   }
 }
-
-// keyboard function, keyboard callback for key down functionality
-void keyboard(unsigned char key, int x, int y) { key_buffer[key] = true; }
-
-// keyboardUp function, keyboard callback for key up functionality
-void keyboardUp(unsigned char key, int x, int y) { key_buffer[key] = false; }
-
-// special function, special callback for special key down functionality
-void special(int key, int x, int y) { spec_buffer[key] = true; }
-
-// specialUp function, special callback for special key up functionality
-void specialUp(int key, int x, int y) { spec_buffer[key] = false; }
-
-void mouse(int button, int state, int x, int y) { mouse_button = button; changed = true; }
 
 // myReshape function, reshapes the window when resized
 void reshape(int width, int height) {
@@ -438,6 +464,24 @@ void reshape(int width, int height) {
 
 }
 
+void traverse( Object* node ) {
+  // base case
+  if ( node == NULL ) { return; }
+
+  // Recursive case, first remember the current transform.
+  mvstack.push( model_view );
+
+  mv *= node->transform;
+  node->render();
+
+  traverse( node->child );
+  //  if ( node->child != NULL) { traverse( node->child ); }
+
+  mv = mvstack.pop();
+
+  traverse( node->sibling );
+  //  if ( node->sibling != NULL) { traverse( node->sibling ); }
+}
 
 // //----------------------------------------------------------------------------
 // extern "C" void reshape(int width, int height)
@@ -451,6 +495,53 @@ void reshape(int width, int height) {
 // }
 //
 
+// void initModel( void ) {
+//     mat4  m;
+//
+//     m = RotateY( theta[Torso] );
+//     model[Torso] = Object( m, torso, NULL, &model[Head1] );
+//
+//     m = Translate(0.0, TORSO_HEIGHT+0.5*HEAD_HEIGHT, 0.0) *
+//       RotateX(theta[Head1]) *
+//       RotateY(theta[Head2]) *
+//       Translate(0.0, -0.5*HEAD_HEIGHT, 0.0);
+//
+//     model[Head1] = Object( m, head, &model[LeftUpperArm], NULL );
+//
+//     m = Translate(-(TORSO_WIDTH+UPPER_ARM_WIDTH), 0.9*TORSO_HEIGHT, 0.0) *
+// 	RotateX(theta[LeftUpperArm]);
+//     model[LeftUpperArm] =
+// 	Object( m, left_upper_arm, &model[RightUpperArm], &model[LeftLowerArm] );
+//
+//     m = Translate(TORSO_WIDTH+UPPER_ARM_WIDTH, 0.9*TORSO_HEIGHT, 0.0) *
+// 	RotateX(theta[RightUpperArm]);
+//     model[RightUpperArm] =
+// 	Object( m, right_upper_arm,
+// 	      &model[LeftUpperLeg], &model[RightLowerArm] );
+//
+//     m = Translate(-(TORSO_WIDTH+UPPER_LEG_WIDTH), 0.1*UPPER_LEG_HEIGHT, 0.0) *
+// 	RotateX(theta[LeftUpperLeg]);
+//     model[LeftUpperLeg] =
+// 	Object( m, left_upper_leg, &model[RightUpperLeg], &model[LeftLowerLeg] );
+//
+//     m = Translate(TORSO_WIDTH+UPPER_LEG_WIDTH, 0.1*UPPER_LEG_HEIGHT, 0.0) *
+// 	RotateX(theta[RightUpperLeg]);
+//     model[RightUpperLeg] =
+// 	Object( m, right_upper_leg, NULL, &model[RightLowerLeg] );
+//
+//     m = Translate(0.0, UPPER_ARM_HEIGHT, 0.0) * RotateX(theta[LeftLowerArm]);
+//     model[LeftLowerArm] = Object( m, left_lower_arm, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_ARM_HEIGHT, 0.0) * RotateX(theta[RightLowerArm]);
+//     model[RightLowerArm] = Object( m, right_lower_arm, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_LEG_HEIGHT, 0.0) * RotateX(theta[LeftLowerLeg]);
+//     model[LeftLowerLeg] = Object( m, left_lower_leg, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_LEG_HEIGHT, 0.0) * RotateX(theta[RightLowerLeg]);
+//     model[RightLowerLeg] = Object( m, right_lower_leg, NULL, NULL );
+//
+// }
 
 // init function, initializes the drawables and GL_DEPTH_TEST
 void init(int argc, char **argv) {
@@ -479,6 +570,9 @@ void init(int argc, char **argv) {
   cube();
 
   tetrahedron(NumTimesToSubdivide);
+
+  // Initialize tree
+  // initModel();
 
   for (int i = 0; i < 30; i++) {
     book_colors[i] = vec3(morpher1(mt), morpher2(mt), morpher3(mt));

@@ -15,6 +15,7 @@ void tables();
 void moon();
 void werewolf();
 
+void vaccuum_pickup();
 void vaccuum();
 void ghost();
 void picture();
@@ -32,6 +33,10 @@ void zombies();
 void coffee();
 
 // // ENVIRONMENT
+GLfloat disp_rot = 0.0;
+
+vec3 platform_loc[2] = { vec3(0.0, 0.0, 0.0) };
+
 vec3 wall_loc[NUM_OBJECTS] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 door_loc[NUM_DOORS] = { vec3(0.0, 0.0, 0.0) };
@@ -57,6 +62,8 @@ vec3 agencies_loc[NUM_AGENCIES] = { vec3(0.0, 0.0, 0.0) };
 vec3 inter_loc[NUM_INTERACTABLES] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 pickup_loc[NUM_PICKUPS] = { vec3(0.0, 0.0, 0.0) };
+
+vec3 platform_size[2] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 wall_size[NUM_OBJECTS] = { vec3(0.0, 0.0, 0.0) };
 

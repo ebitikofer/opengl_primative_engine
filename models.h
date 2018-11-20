@@ -8,19 +8,12 @@
 #define TILE_SIZE  FLOOR_SIZE / NUM_TILES
 #define WALL_HEIGHT 15
 
-#define SKY_R 0.05
-#define SKY_G 0.0
-#define SKY_B 0.1
-
-#define COLOR_SKY 1
-//   vec3(0.8, 1.0, 1.0),
-
 #define PLAYER_W 2.0
-#define PLAYER_H 10.0
+#define PLAYER_H 5.0
 #define PLAYER_D 2.0
 
 #define FLOOR_W TILE_SIZE
-#define FLOOR_H 0.1
+#define FLOOR_H 1.0
 #define FLOOR_D TILE_SIZE
 #define FLOOR_R 0.2
 #define FLOOR_G 0.1
@@ -44,7 +37,7 @@
 #define LAT_WALL_B 0.5
 
 #define ROOF_W FLOOR_SIZE
-#define ROOF_H 0.1
+#define ROOF_H 1.0
 #define ROOF_D FLOOR_SIZE
 #define ROOF_R 0.2
 #define ROOF_G 0.1
@@ -298,6 +291,13 @@
 #define HANDLE_R 0.4
 #define HANDLE_G 0.4
 #define HANDLE_B 0.4
+
+#define BULLET_W 0.1
+#define BULLET_H 0.1
+#define BULLET_D 0.1
+#define BULLET_R 0.1
+#define BULLET_G 0.3
+#define BULLET_B 0.1
 
 // #define TIP_B 0.01
 // #define TIP_T 0.01

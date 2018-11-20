@@ -2,6 +2,8 @@
 #define INSTANCE_H
 
 #include <Angel.h>
+#include "engine.h"
+#include "game.h"
 #include "models.h"
 
 // Motion rates
@@ -17,16 +19,19 @@ vec3 player = vec3(0.0, 0.0, 6.0);
 vec3 sky = vec3(0.8, 1.0, 1.0);
 vec3 feather = vec3(FEATHER_RE, FEATHER_GR, FEATHER_BL);
 
+float display_rot = 0.0;
+
 float dart_x = 0.0, dart_z = 0.0;
 bool fire_gun = false, reload = true, action = false;
 float elevation = 0.0, frame = 3.0;
-int health = 2, score = 0;
+int score = 0;
+int health = 5;
 bool solid_part = true, game_over = false;
-
 
 GLfloat ghost_height[5] = { 0.0 },
         bookcase_x[2] = { 20.0, 30.0 },
-        zombie_height[6] = { 0.0 };
+        zombie_height[6] = { 0.0 },
+        bullet_dist[NUM_BULLETS];
 
 GLfloat wall_height = 5.0,
         door_vert = 2.5,
@@ -44,19 +49,19 @@ vec3 zombie_loc[NUM_ZOMBIES] = {
   vec3(15.0, zombie_height[0], 32.5)
 };
 
+vec3 bullet[NUM_BULLETS] = { vec3(0.0, 0.0, 0.0) };
+
 vec3 agency_loc = vec3(-51.0, 0.0, 10.0),
      ghost_loc = vec3(-17.5, ghost_height[0], -5.0),
      picture_loc = vec3(12.5, 0.0, -1.0),
      door_color = vec3(0.7, 0.6, 0.5);
 
-int picture_rot = 225, flicker = 0, door_open[NUM_DOORS] = { 0 };
+int picture_rot = 225, flicker = 0, door_open[NUM_DOORS] = { 0 }, bullet_ang[NUM_BULLETS] = { 0 };
 
 bool debug = false,
      toggle = true,
      draw_table = false,
      door_collide = true,
-     jump = false,
-     fall = false,
      open_door[NUM_DOORS] = { false },
      werewolf_chase = false,
      ghost_chase = false,
@@ -74,7 +79,8 @@ bool debug = false,
      kill_zombie[3] = { false },
      //hit_glass = false,
      get_coffee = false,
-     shut_door = false;
+     shut_door = false,
+     active[NUM_BULLETS] = { false };
 
 bool rooms[NUM_ROOMS] = { false };
 bool displayed[NUM_ROOMS] = { false };
@@ -90,17 +96,6 @@ vec4 bounds[NUM_ROOMS] = {
   vec4(50.0, 25.0, 40.0, 25.0),
   vec4(50.0, -50.0, 50.0, 40.0)
 };
-
-// void open_door(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void werewolf_chase(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void ghost_chase(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void picture_fix(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void open_bookcase(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void door_unlock(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void escape_agency(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void zombie_chase(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void confront_agency(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
-// void door_shut(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d)
 
 void set_room(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d){
   for (int i = 0; i < NUM_ROOMS; i++) {
@@ -130,7 +125,6 @@ void animation(void) {
   // mv_vel = vec3(0.0, 0.0, 0.0);
   mv_vel.x = 0.0;
   mv_vel.z = 0.0;
-
 
   set_room(mv_pos.x, 0.0, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D);
 
@@ -178,7 +172,7 @@ void animation(void) {
   } else { }
 
   if (rooms[2]) {
-    ghost_chase = true;
+    // ghost_chase = true;
     if (pickup[0]){
       get_sweeper = true;
     }
@@ -242,12 +236,12 @@ void animation(void) {
     if (!agency_chase) {
       agency_loc = vec3(45.0, 0.0, 15.0);
     }
-    hallucinate = true;
-    agency_chase = true;
-    dizziness = sickness(mt);
-    nausea += 0.001 + dizziness;
-    phi = 25 * -sin(nausea *180/M_PI);
-    theta = -90 + 25 * cos((nausea *180/M_PI)/2);
+    // hallucinate = true;
+    // agency_chase = true;
+    // dizziness = sickness(mt);
+    // nausea += 0.001 + dizziness;
+    // phi = 25 * -sin(nausea *180/M_PI);
+    // theta = -90 + 25 * cos((nausea *180/M_PI)/2);
     if (doors[5]){
       if (action) {
         open_door[5] = true;
@@ -303,6 +297,12 @@ void animation(void) {
         ghost_height[i] = sin((frame - i)*M_PI/30);
       }
 
+      display_rot += frame;
+      // display_rot += 0.1;
+      // if (display_rot > 359.9) {
+      //   display_rot = 0.0;
+      // }
+
       if (lose_power && flicker < 7) {
         light1 = !light1;
         glUniform1i(Light1,light1);
@@ -331,6 +331,8 @@ void animation(void) {
         ghost_height[i] = -sin((frame - i)*M_PI/30);
       }
 
+      display_rot -= frame;
+
       if (lose_power && flicker < 7) {
         light2 = !light2;
         glUniform1i(Light2,light2);
@@ -339,26 +341,11 @@ void animation(void) {
 
     }
 
-    if (fire_gun) dart_z -= 0.1; // RATE_GUN;
-    else dart_z = 0.0;
-
   }
 
   if (step == 4) step = 0;
 
-  if (fire_gun)
-    reload = false;
-  else {
-    reload = true;
-    dart_x = 0.0;
-  }
-
-  // if (mv_vel.z >= DRAW_DISTANCE) { mv_vel.z = -DRAW_DISTANCE; regen = true; }
-  // if (mv_vel.z < -DRAW_DISTANCE) { mv_vel.z =  DRAW_DISTANCE; regen = true; }
-  // if (mv_vel.x >= DRAW_DISTANCE) { mv_vel.x = -DRAW_DISTANCE; regen = true; }
-  // if (mv_vel.x < -DRAW_DISTANCE) { mv_vel.x =  DRAW_DISTANCE; regen = true; }
-
-  if (health == 0) exit(EXIT_SUCCESS);
+  if (health == 0) death = true;
 
   for (int i = 0; i < NUM_DOORS; i++) {
     if (door_open[i] < 90) { // door_rot[i] + 90) {
@@ -388,7 +375,10 @@ void animation(void) {
   if (get_sweeper) {
     if (g_die[0]) kill_ghost = true;
   } else {
-    if (g_die[0]) death = true;// exit(EXIT_FAILURE);
+    if (g_die[0]) {
+      health--;
+      hurt = true;
+    } // exit(EXIT_FAILURE);
   }
 
   if (kill_ghost) {
@@ -464,7 +454,10 @@ void animation(void) {
       if (z_die[i]) kill_zombie[i] = true;
     }
   } else {
-    if (z_die[0] || z_die[1] || z_die[2]) death = true;// exit(EXIT_FAILURE);
+    if (z_die[0] || z_die[1] || z_die[2]) {
+      health--;
+      hurt = true;
+    }// exit(EXIT_FAILURE);
   }
 
   for (int i = 0; i < NUM_ZOMBIES; i++) {
@@ -475,6 +468,11 @@ void animation(void) {
     }
   }
 
+  if(hurt) {
+    mv_vel.z += 20.0 * sin(theta*M_PI/180)/2;
+    mv_vel.x += 20.0 * cos(theta*M_PI/180)/2;
+  }
+
   if (door_height > wall_height) {
     if (shut_door) { door_height -= 0.075; }
   }
@@ -483,25 +481,7 @@ void animation(void) {
     speed_boost = 2.0;
   }
 
-  if (!fall) {
-    mv_vel.y = 0.0;
-    // mv_pos.y = 0.0;
-  }
-
-  if (jump) {
-    mv_vel.y += 0.75;
-    jump = false;
-    fall = true;
-  }
-
-  if (mv_pos.y > 0.0) {
-    mv_vel.y -= .015;
-  } else {
-    mv_pos.y = 0.0;
-    fall = false;
-  }
-
-  title_bar = "Score: " + std::to_string(mv_pos.x) + " Darts: " + std::to_string(mv_pos.y) + " bool: " + std::to_string(0.01 * (time - lasttime)); // + " l:" + std::to_string(l) + " r:" + std::to_string(r) + " f:" + std::to_string(f) + " b:" + std::to_string(b);
+  title_bar = "Score: " + std::to_string(collider[1]) + " Darts: " + std::to_string(mv_vel.y) + " bool: " + std::to_string(0.01 * (time - lasttime)); // + " l:" + std::to_string(l) + " r:" + std::to_string(r) + " f:" + std::to_string(f) + " b:" + std::to_string(b);
 
   if (mouse_button == 3 && changed) { fovy -= 5.0; changed = false; } else if (mouse_button == 4 && changed) { fovy += 5.0; changed = false; }
 
@@ -517,14 +497,14 @@ void animation(void) {
         case 'd': { mv_vel.x += speed_boost * sin(theta*M_PI/180)/2; mv_vel.z -= speed_boost * cos(theta*M_PI/180)/2; } break;
         case ' ': { if (!fall) jump = true; } break; // Action
         case 'f': { action = true; } break; // Action
-        // case ' ': { if (reload) { fire_gun = true; darts--; } } break; // Shoot
+        case '/': { if (reload) { fire_gun = true; } } break; // Shoot
         case '1': { hallucinate = !hallucinate; } break; // Weapon 1
         case '2': { } break; // Weapon 2
         case '3': { } break; // Weapon 3
         case 'c': if (toggle) { perspective = !perspective; toggle = false; } break; //fire
         // Utility
-        case '-': light1 = !light1; glUniform1i(Light1,light1); break;
-        case '=': light2 = !light2; glUniform1i(Light2,light2); break;
+        case '-': /* light1 = !light1; glUniform1i(Light1,light1); */ health -= 1; break;
+        case '=': /* light2 = !light2; glUniform1i(Light2,light2); */ health += 1; break;
         case 'W': { solid_part = !solid_part; } break; //wire
         case 'z': zNear *= 1.1; zFar /= 1.1; break;
         case 'Z': zNear /= 1.1; zFar *= 1.1; break;
@@ -539,7 +519,7 @@ void animation(void) {
       }
     } else {
       switch (i) {
-        // case ' ': fire_gun = false; break; // Stop firing, not the same as bullet landing
+        case '/': fire_gun = false; break; // Stop firing, not the same as bullet landing
         // case 'w': { mv_vel.z = 0.0; mv_vel.x = 0.0; } break;
         // case 's': { mv_vel.z = 0.0; mv_vel.x = 0.0; } break;
         // case 'a': { mv_vel.x = 0.0; mv_vel.z = 0.0; } break;
@@ -562,62 +542,87 @@ void animation(void) {
 
   }
 
+  if (jump) {
+    mv_vel.y += 0.75;
+    jump = false;
+    fall = true;
+  }
+
+  if (!fall) {
+    mv_vel.y = 0.0;
+  }
+
+  mv_vel.y -= 0.015;
+
+  for (int i = 0; i < 1; i++) {
+    collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, platform_loc[i], platform_size[i], collide[i]);
+  }
+
+  if(!debug) {
+    // for (int i = 0; i < NUM_OBJECTS; i++) {
+      // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, wall_loc[i], wall_size[i], collide[i]);
+    // }
+    // for (int i = 0; i < NUM_BOOKCASE; i++) {
+      // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, bookcase_loc[i], bookcase_size[i], collide[i]);
+    // }
+    // for (int i = 0; i < NUM_DOORS; i++) {
+      // if (!open_door[i]) collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, door_loc[i], door_size[i], collide[i]);
+    // }
+    for (int i = 0; i < NUM_TABLES; i++) {
+      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, table_loc[i], table_size[i], collide[i]);
+    }
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, ghosts_loc[0], ghosts_size[0], g_die[0]);
+    }
+    for (int i = 0; i < NUM_ZOMBIES; i++) {
+      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, zombies_loc[i], zombies_size[i], z_die[i]);
+    }
+  }
+
+  // for (int i = 0; i < NUM_ZOMBIES; i++) {
+  //   for (int j = 0; j < NUM_OBJECTS; j++) {
+  //     collision(zombies_loc[i].x, mv_pos.y, zombies_loc[i].z, PLAYER_W * 2, PLAYER_H * 2, PLAYER_D * 2, wall_loc[j], wall_size[j], collide[j]);
+  //   }
+  // }
+  // for (int i = 0; i < NUM_ZOMBIES; i++) {
+  //   for (int j = 0; j < NUM_OBJECTS; j++) {
+  //     collision(zombies_loc[i].x, mv_pos.y, zombies_loc[i].z, PLAYER_W * 2, PLAYER_H * 2, PLAYER_D * 2, wall_loc[j], wall_size[j], collide[j]);
+  //   }
+  // }
+
+  // object(pv, model_view, mv_pos.x - 5.0 * cos((theta - 0) * M_PI/180), mv_pos.y - 0.25, mv_pos.z - 5.0 * sin((theta - 0) * M_PI/180), 3.0, 3.0, 10.0, BARREL_R, BARREL_G, BARREL_B, 0, -theta + 90, 0, 0, 0, 0);
+
+
+  for (int i = 0; i < NUM_DOORS; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, door_loc[i], door_size[i], doors[i]);
+  }
+  for (int i = 0; i < NUM_INTERACTABLES; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, inter_loc[i], inter_size[i], proximal[i]);
+  }
+  for (int i = 0; i < NUM_PICKUPS; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, pickup_loc[i], pickup_size[i], pickup[i]);
+  }
+
+  // collision(&enemy_loc[0].x, mv_pos.y, &enemy_loc[0].z, GHOST_W, GHOST_H, GHOST_D, wall_loc, wall_size, collide, NUM_OBJECTS);
+
+  if (!collider[1]) {
+  // if (mv_pos.y > 0.0) {
+  } else {
+    // mv_pos.y = 0.0;
+    fall = false;
+  }
+
+  for (int i = 0; i < 6; i++) {
+    collider[i] = false;
+  }
+
   mv_pos.x += mv_vel.x;
   mv_pos.y += mv_vel.y;
   mv_pos.z += mv_vel.z;
 
-  lasttime=time;
+  lasttime = time;
 
   glutPostRedisplay();
-
-}
-
-// menu_select function, functions for menu click
-void menu_select(int mode) {
-
-  switch (mode) {
-    case 1: ; break;
-    case 2: glutIdleFunc(NULL); break;
-    case 3: /* solid_part = !solid_part; */ glutPostRedisplay(); break;
-    case 4: exit(EXIT_SUCCESS);
-  }
-
-}
-
-// null_select function, function for menu items that dont do anything
-void null_select(int mode) { }
-
-// glutMenu function, menu generating function
-void glutMenu(void) {
-
-  int glut_menu[3];
-
-  glut_menu[1] = glutCreateMenu(null_select);
-  glutAddMenuEntry("start : tilde", 0);
-  glutAddMenuEntry("right : right arrow", 0);
-  glutAddMenuEntry("left  : left arrow", 0);
-  glutAddMenuEntry("down  : up arrow", 0);
-  glutAddMenuEntry("up    : down arrow", 0);
-
-  glut_menu[2] = glutCreateMenu(null_select);
-  glutAddMenuEntry("start  : x", 0);
-  glutAddMenuEntry("fire   : space", 0);
-  glutAddMenuEntry("weak   : 1", 0);
-  glutAddMenuEntry("medium : 2", 0);
-  glutAddMenuEntry("strong : 3", 0);
-
-  glut_menu[0] = glutCreateMenu(NULL);
-  glutAddSubMenu("freelook", glut_menu[1]);
-  glutAddSubMenu("operate the gun", glut_menu[2]);
-
-  glutCreateMenu(menu_select);
-  glutAddMenuEntry("Start", 1);
-  glutAddMenuEntry("Stop", 2);
-  // glutAddMenuEntry("Toggle Wireframe", 3);
-  glutAddSubMenu("How to...", glut_menu[0]);
-  glutAddMenuEntry("Quit", 4);
-  // glutAttachMenu(GLUT_LEFT_BUTTON);
-  glutAttachMenu(GLUT_MIDDLE_BUTTON);
 
 }
 
