@@ -3,34 +3,7 @@
 
 void set_objects();
 
-void walls();
-void roof();
-void floor();
 void character();
-void hud();
-void door();
-void doorknob();
-void tables();
-
-void moon();
-void werewolf();
-
-void vaccuum_pickup();
-void vaccuum();
-void ghost();
-void picture();
-void light();
-void bookcase();
-void book();
-void key();
-
-void fire();
-void agency();
-
-void gun_pickup();
-void gun();
-void zombies();
-void coffee();
 
 // // ENVIRONMENT
 GLfloat disp_rot = 0.0;
@@ -55,9 +28,9 @@ vec3 ghosts_loc[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 zombies_loc[NUM_ZOMBIES] = { vec3(0.0, 0.0, 0.0) };
 
-vec3 werewolves_loc[NUM_WEREWOLVES] = { vec3(0.0, 0.0, 0.0) };
+vec3 werewolves_loc[NUM_WEREWOLFS] = { vec3(0.0, 0.0, 0.0) };
 
-vec3 agencies_loc[NUM_AGENCIES] = { vec3(0.0, 0.0, 0.0) };
+vec3 agencies_loc[NUM_AGENCIES] = { vec3(1.0, 1.0, 1.0) };
 
 vec3 inter_loc[NUM_INTERACTABLES] = { vec3(0.0, 0.0, 0.0) };
 
@@ -77,7 +50,7 @@ vec3 ghosts_size[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 zombies_size[NUM_ZOMBIES] = { vec3(0.0, 0.0, 0.0) };
 
-vec3 werewolves_size[NUM_WEREWOLVES] = { vec3(0.0, 0.0, 0.0) };
+vec3 werewolves_size[NUM_WEREWOLFS] = { vec3(0.0, 0.0, 0.0) };
 
 vec3 agencies_size[NUM_AGENCIES] = { vec3(0.0, 0.0, 0.0) };
 

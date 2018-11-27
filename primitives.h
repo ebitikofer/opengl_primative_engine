@@ -124,7 +124,6 @@ void divide_triangle(const point4& a, const point4& b, const point4& c, int coun
 
 }
 
-
 void tetrahedron(int count) {
 
   Index = 0;

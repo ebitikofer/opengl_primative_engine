@@ -3,6 +3,7 @@
 
 #include <Angel.h>
 #include "engine.h"
+#include "utility.h"
 #include "game.h"
 #include "models.h"
 
@@ -10,7 +11,9 @@
 #define RATE_PLAYER	  0.5
 #define RATE_GUN	    1
 
-#define NUM_ZOMBIES	3
+std::uniform_real_distribution<double> dist_x(-7.0, 7.0);
+std::uniform_real_distribution<double> dist_z(-10.0, -6.0);
+std::uniform_real_distribution<double> sickness(0.0, 0.005);
 
 // Game object locations
 vec3 player = vec3(0.0, 0.0, 6.0);
@@ -40,10 +43,17 @@ GLfloat wall_height = 5.0,
         dizziness = 0.0,
         nausea = 0.0,
         zombie_mult[NUM_ZOMBIES] = { 1.0, 1.0, 1.0 },
+        werewolf_mult[NUM_ZOMBIES] = { 1.0, 1.0, 1.0 },
         door_height = 27.5,
         speed_boost = 1.0;
 
 vec3 zombie_loc[NUM_ZOMBIES] = {
+  vec3(10.0, zombie_height[0], 25.0),
+  vec3(10.0, zombie_height[0], 35.0),
+  vec3(15.0, zombie_height[0], 32.5)
+};
+
+vec3 werewolf_loc[NUM_ZOMBIES] = {
   vec3(10.0, zombie_height[0], 25.0),
   vec3(10.0, zombie_height[0], 35.0),
   vec3(15.0, zombie_height[0], 32.5)
@@ -85,10 +95,14 @@ bool debug = false,
 bool rooms[NUM_ROOMS] = { false };
 bool displayed[NUM_ROOMS] = { false };
 vec4 bounds[NUM_ROOMS] = {
-  vec4(-25.0, -50.0, 40.0, 0.0),
-  vec4(-25.0, -50.0, 0.0, -50.0),
-  vec4(0.0, -25.0, 0.0, -50.0),
+  vec4(0.0, -25.0, 0.0, -25.0),
+  vec4(0.0, -25.0, 25.0, 0.0),
   vec4(25.0, 0.0, 0.0, -25.0),
+  vec4(25.0, 0.0, 25.0, 0.0),
+  // vec4(-25.0, -50.0, 40.0, 0.0),
+  // vec4(-25.0, -50.0, 0.0, -50.0),
+  // vec4(0.0, -25.0, 0.0, -50.0),
+  // vec4(25.0, 0.0, 0.0, -25.0),
   vec4(25.0, 0.0, -25.0, -50.0),
   vec4(50.0, 25.0, -25.0, -50.0),
   vec4(50.0, 25.0, 20.0, -25.0),
@@ -150,79 +164,90 @@ void animation(void) {
 
   static int step;
 
+  if (pickup[0]){
+    get_sweeper = true;
+  }
+  if (pickup[1]){
+    get_key = true;
+  }
+  if (pickup[2]){
+    get_gun = true;
+  }
+  if (pickup[3]){
+    get_coffee = true;
+  }
+
   if (rooms[0]) {
-    if (doors[0]){
-      if (action) {
-        open_door[0] = true;
-      }
-    }
-    if (doors[8]){
-      if (action) {
-        open_door[8] = true;
-      }
-    }
-  } else { }
+    agency_chase = true;
+    // if (doors[0]){
+    //   if (action) {
+    //     open_door[0] = true;
+    //   }
+    // }
+    // if (doors[8]){
+    //   if (action) {
+    //     open_door[8] = true;
+    //   }
+    // }
+  } else { agency_chase = false; }
 
   if (rooms[1]) {
-    if (doors[1]){
-      if (action) {
-        open_door[1] = true;
-      }
-    }
-  } else { }
+    werewolf_chase = true;
+    // if (doors[1]){
+    //   if (action) {
+    //     open_door[1] = true;
+    //   }
+    // }
+  } else { werewolf_chase = false; }
 
   if (rooms[2]) {
-    // ghost_chase = true;
-    if (pickup[0]){
-      get_sweeper = true;
-    }
-    if (doors[2]){
-      if (action) {
-        open_door[2] = true;
-      }
-    }
-    if (doors[9]){
-      if (action) {
-        open_door[9] = true;
-      }
-    }
+    ghost_chase = true;
+    // if (doors[2]){
+    //   if (action) {
+    //     open_door[2] = true;
+    //   }
+    // }
+    // if (doors[9]){
+    //   if (action) {
+    //     open_door[9] = true;
+    //   }
+    // }
   }
   else { ghost_chase = false; }
 
   if (rooms[3]) {
-    if (proximal[2]){
-      if (action) {
-        fix_picture = true;
-      }
-    }
+    zombie_chase = true;
+    // if (proximal[2]){
+    //   if (action) {
+    //     fix_picture = true;
+    //   }
+    // }
     // if (doors[3]){
     //   if (action) {
     //     open_door[3] = true;
     //   }
     // }
   } else {
-    lose_power = false;
+    zombie_chase = false;
+    // lose_power = false;
   }
 
   if (rooms[4]) {
-    light1 = true;
-    glUniform1i(Light1,light1);
-    light2 = true;
-    glUniform1i(Light2,light2);
-    agency_loc = vec3(12.5, 0.0, -51.0);
-    if (proximal[3]){
-      if (action) {
-        bookcase_open = true;
-      }
-    }
+    // lights[0] = true;
+    // glUniform1i(Lights[0], lights[0]);
+    // lights[1] = true;
+    // glUniform1i(Lights[1], lights[1]);
+    // agency_loc = vec3(12.5, 0.0, -51.0);
+    // if (proximal[3]){
+    //   if (action) {
+    //     bookcase_open = true;
+    //   }
+    // }
   } else {
-    bookcase_open = false;
+    // bookcase_open = false;
   }
 
   if (rooms[5]) {
-    if (pickup[1]){
-      get_key = true;
-    }
     if (doors[4]){
       if (action) {
         if (get_key) {
@@ -233,9 +258,9 @@ void animation(void) {
   } else { }
 
   if (rooms[6]) {
-    if (!agency_chase) {
-      agency_loc = vec3(45.0, 0.0, 15.0);
-    }
+    // if (!agency_chase) {
+      // agency_loc = vec3(45.0, 0.0, 15.0);
+    // }
     // hallucinate = true;
     // agency_chase = true;
     // dizziness = sickness(mt);
@@ -249,14 +274,11 @@ void animation(void) {
     }
   } else {
     hallucinate = false;
-    agency_chase = false;
+    // agency_chase = false;
   }
 
   if (rooms[7]) {
-    zombie_chase = true;
-    if (pickup[2]){
-      get_gun = true;
-    }
+    // zombie_chase = true;
     if (doors[6]){
       if (action) {
         open_door[6] = true;
@@ -268,10 +290,10 @@ void animation(void) {
       }
     }
   }
-  else { zombie_chase = false; }
+  else { /*zombie_chase = false;*/ }
 
   if (rooms[8]) {
-    agency_loc = vec3(51.0, 0.0, 30.0);
+    // agency_loc = vec3(51.0, 0.0, 30.0);
     if (doors[7]){
       if (action) {
         open_door[7] = true;
@@ -281,9 +303,6 @@ void animation(void) {
 
   if (rooms[9]) {
     shut_door = true;
-    if (pickup[3]){
-      get_coffee = true;
-    }
   }
   else { shut_door = false; }
 
@@ -297,15 +316,15 @@ void animation(void) {
         ghost_height[i] = sin((frame - i)*M_PI/30);
       }
 
-      display_rot += frame;
+      display_rot = frame;
       // display_rot += 0.1;
       // if (display_rot > 359.9) {
       //   display_rot = 0.0;
       // }
 
       if (lose_power && flicker < 7) {
-        light1 = !light1;
-        glUniform1i(Light1,light1);
+        lights[0] = !lights[0];
+        glUniform1i(Lights[0], lights[0]);
         flicker++;
       }
 
@@ -317,10 +336,10 @@ void animation(void) {
       }
 
       if (lose_power && flicker >= 15) {
-        light1 = false;
-        glUniform1i(Light1,light1);
-        light2 = false;
-        glUniform1i(Light2,light2);
+        lights[0] = false;
+        glUniform1i(Lights[0], lights[0]);
+        lights[1] = false;
+        glUniform1i(Lights[1], lights[1]);
       }
 
     } else if (step == 1 || step == 3) {
@@ -331,11 +350,11 @@ void animation(void) {
         ghost_height[i] = -sin((frame - i)*M_PI/30);
       }
 
-      display_rot -= frame;
+      display_rot = -frame;
 
       if (lose_power && flicker < 7) {
-        light2 = !light2;
-        glUniform1i(Light2,light2);
+        lights[1] = !lights[1];
+        glUniform1i(Lights[1], lights[1]);
         flicker++;
       }
 
@@ -428,6 +447,25 @@ void animation(void) {
     }
   }
 
+  if (werewolf_chase) {
+    if (werewolf_loc[0].x != mv_pos.x) {
+      if (werewolf_loc[0].x - mv_pos.x < 0) {
+        werewolf_loc[0].x += 0.1;
+      }
+      if (werewolf_loc[0].x - mv_pos.x > 0) {
+        werewolf_loc[0].x -= 0.1;
+      }
+    }
+    if (werewolf_loc[0].z != mv_pos.z) {
+      if (werewolf_loc[0].z - mv_pos.z < 0) {
+        werewolf_loc[0].z += 0.1;
+      }
+      if (werewolf_loc[0].z - mv_pos.z > 0) {
+        werewolf_loc[0].z -= 0.1;
+      }
+    }
+  }
+
   if (zombie_chase) {
     for (int i = 0; i < NUM_ZOMBIES; i++) {
       if (zombie_loc[i].x != mv_pos.x) {
@@ -503,8 +541,8 @@ void animation(void) {
         case '3': { } break; // Weapon 3
         case 'c': if (toggle) { perspective = !perspective; toggle = false; } break; //fire
         // Utility
-        case '-': /* light1 = !light1; glUniform1i(Light1,light1); */ health -= 1; break;
-        case '=': /* light2 = !light2; glUniform1i(Light2,light2); */ health += 1; break;
+        case '-': /* lights[0] = !lights[0]; glUniform1i(Lights[0], lights[0]); */ health -= 1; break;
+        case '=': /* lights[1] = !lights[1]; glUniform1i(Lights[1], lights[1]); */ health += 1; break;
         case 'W': { solid_part = !solid_part; } break; //wire
         case 'z': zNear *= 1.1; zFar /= 1.1; break;
         case 'Z': zNear /= 1.1; zFar *= 1.1; break;
@@ -542,6 +580,153 @@ void animation(void) {
 
   }
 
+  float gx = 50.0;
+  float gy = 10;
+  float gz = 50.0;
+
+  float kx = 50.0;
+  float ky = 10;
+  float kz = -50.0;
+
+  float vx = -50.0;
+  float vy = 10;
+  float vz = -50.0;
+
+  float cx = -50.0;
+  float cy = 10;
+  float cz = 50.0;
+
+  // float x
+  // float y
+  // float z
+
+  // float ra
+  // float yax
+
+  // float w
+  // float h
+  // float d
+
+  // float r
+  // float g
+  // float b
+
+  // float pi
+  // float ya
+  // float ro
+
+  // float rta
+  // float rl
+
+
+  for (int i = 0; i < NUM_GUNS; i++) {
+    // for (int j = 0; j < PARTS_GUN; j++) {
+      guns[i][0].update(gx + -0.25*0.2 * cos((display_rot - 0) * M_PI/180), gy + 0.0*0.2, gz + -0.25*0.2 /* - 0.0 */ * sin((display_rot - 0) * M_PI/180), BARREL_W*0.2, BARREL_H*0.2, BARREL_D*0.2, BARREL_R, BARREL_G, BARREL_B, 0, 90 - display_rot, 0);
+      guns[i][1].update(gx + -1.25*0.2 * cos((display_rot - 0) * M_PI/180), gy + -0.25*0.2, gz + -1.25*0.2 * sin((display_rot - 0) * M_PI/180), SIGHT_W*0.2, SIGHT_H*0.2, SIGHT_D*0.2, SIGHT_R, SIGHT_G, SIGHT_B, 0, 90 - display_rot, 90);
+      guns[i][2].update(gx + 0.025*0.2 * cos((display_rot - 0) * M_PI/180), gy + -1.0*0.2, gz + 0.025*0.2 * sin((display_rot - 0) * M_PI/180), HANDLE_W*0.2, HANDLE_H*0.2, HANDLE_D*0.2, HANDLE_R, HANDLE_G, HANDLE_B, 0, 180 - display_rot, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_KEYS; i++) {
+    // for (int j = 0; j < PARTS_KEY; j++) {
+      keys[i][0].update(kx + 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz + 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_W*0.2, KEYL_H*0.2, KEYL_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
+      keys[i][1].update(kx - 0.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz - 0.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_H*0.2, KEYL_D*0.2, KEYL_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
+      keys[i][2].update(kx - 2.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz - 2.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_H*0.2, KEYL_D*0.2, KEYL_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
+      keys[i][3].update(kx - 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 1.5*0.2, kz - 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
+      keys[i][4].update(kx - 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky - 1.5*0.2, kz - 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
+      keys[i][5].update(kx + 2.0*0.2 * cos((display_rot - 0) * M_PI/180), ky - 1.0*0.2, kz + 2.0*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_H*0.2, KEYS_D*0.2, KEYS_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_VACCUUMS; i++) {
+    // for (int j = 0; j < PARTS_VACCUUM; j++) {
+      vaccuums[i][0].update(vx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), vy - 3.0*0.2, vz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), BODYL_W*0.2, BODYL_H*0.2, BODYL_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0 - display_rot, 0);
+      vaccuums[i][1].update(vx - 0.5*0.2 * cos((display_rot - 0) * M_PI/180), vy + 0.5*0.2, vz - 0.5*0.2 * sin((display_rot - 0) * M_PI/180), BODYS_W*0.2, BODYS_H*0.2, BODYS_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0 - display_rot, 0);
+      vaccuums[i][2].update(vx + 2.75*0.2 * cos((display_rot - 65) * M_PI/180), vy + 0.5*0.2, vz + 2.75*0.2 * sin((display_rot - 65) * M_PI/180), HOSEL_W*0.203, HOSEL_H*0.2, HOSEL_D*0.203, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
+      vaccuums[i][3].update(vx + 1.0*0.2 * cos((display_rot - 0) * M_PI/180), vy + 2.5*0.2, vz + 1.0*0.2 * sin((display_rot - 0) * M_PI/180), HOSEM_W*0.201, HOSEM_H*0.2, HOSEM_D*0.201, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
+      vaccuums[i][4].update(vx + 1.75*0.2 * cos((display_rot - 50) * M_PI/180), vy + 3.5*0.2, vz + 1.75*0.2 * sin((display_rot - 50) * M_PI/180), HOSES_W*0.202, HOSES_D*0.2, HOSES_H*0.202, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
+      vaccuums[i][5].update(vx + 2.75*0.2 * cos((display_rot - 65) * M_PI/180), vy - 2.5*0.2, vz + 2.75*0.2 * sin((display_rot - 65) * M_PI/180), NOZZLE_D*0.2, NOZZLE_H*0.2, NOZZLE_W*0.2, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
+      vaccuums[i][6].update(vx - 2.25*0.2 * cos((display_rot - 25) * M_PI/180), vy - 1.5*0.2, vz - 2.25*0.2 * sin((display_rot - 25) * M_PI/180), STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0 - display_rot, 0);
+      vaccuums[i][7].update(vx - 2.25*0.2 * cos((display_rot + 25) * M_PI/180), vy - 1.5*0.2, vz - 2.25*0.2 * sin((display_rot + 25) * M_PI/180), STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0 - display_rot, 0);
+      vaccuums[i][8].update(vx + 2.5*0.2 * cos((display_rot - 90) * M_PI/180), vy - 3.5*0.2, vz + 2.5*0.2 * sin((display_rot - 90) * M_PI/180), WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, -90 - display_rot, 0);
+      vaccuums[i][9].update(vx + 2.5*0.2 * cos((display_rot + 90) * M_PI/180), vy - 3.5*0.2, vz + 2.5*0.2 * sin((display_rot + 90) * M_PI/180), WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, 90 - display_rot, 0);
+      vaccuums[i][10].update(vx + 1.5*0.2 * cos((display_rot - 0) * M_PI/180), vy + 0.5*0.2, vz + 1.5*0.2 * sin((display_rot - 0) * M_PI/180), LIGHT_W*0.2, LIGHT_H*0.2, LIGHT_D*0.2, LIGHT_R, LIGHT_G, LIGHT_B, 0, 0 - display_rot, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_COFFEES; i++) {
+    // for (int j = 0; j < PARTS_COFFEE; j++) {
+      coffees[i][0].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 0.8*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), COFFEE_W*0.2, COFFEE_H*0.2, COFFEE_D*0.2, COFFEE_R, COFFEE_G, COFFEE_B, 0, 0 - display_rot, 0);
+      coffees[i][1].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.0*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), CUP_W*0.2, CUP_H*0.2, CUP_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0 - display_rot, 0);
+      coffees[i][2].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.5*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 45 - display_rot, 0);
+      coffees[i][3].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.5*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0 - display_rot, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_GHOSTS; i++) {
+    // for (int j = 0; j < PARTS_GHOST; j++) {
+      ghosts[i][0].update(ghosts_loc[0].x, ghost_height[0] + 0.5, ghosts_loc[0].z, ghosts_size[0].x, ghosts_size[0].y, ghosts_size[0].z, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0);
+      ghosts[i][1].update(ghosts_loc[0].x, ghost_height[1] + 0.0, ghosts_loc[0].z, ghosts_size[0].x*1.25, ghosts_size[0].y*1.25, ghosts_size[0].z*1.25, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0);
+      ghosts[i][2].update(ghosts_loc[0].x + 0.5 * cos(105 * M_PI/180), ghost_height[2] - 1.0, ghosts_loc[0].z + 0.5 * sin(105 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
+      ghosts[i][3].update(ghosts_loc[0].x + 0.5 * cos(225 * M_PI/180), ghost_height[3] - 1.0, ghosts_loc[0].z + 0.5 * sin(225 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
+      ghosts[i][3].update(ghosts_loc[0].x + 0.5 * cos(345 * M_PI/180), ghost_height[4] - 1.0, ghosts_loc[0].z + 0.5 * sin(345 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
+    // }
+  }
+
+  for (int i = 0; i < NUM_ZOMBIES; i++) {
+    // for (int j = 0; j < PARTS_ZOMBIE; j++) {
+    zombies[i][0].update(zombies_loc[i].x + 0.0, agency_loc.y + 1.15, zombies_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][1].update(zombies_loc[i].x + 0.0, agency_loc.y + 0.75, zombies_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][2].update(zombies_loc[i].x + 0.3, agency_loc.y + 0.75, zombies_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][3].update(zombies_loc[i].x + 0.3, agency_loc.y + 0.75, zombies_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][4].update(zombies_loc[i].x + 0.4, agency_loc.y + 0.875, zombies_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][5].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][6].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][7].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][8].update(zombies_loc[i].x + 0.25, agency_loc.y - 0.125, zombies_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][9].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.375, zombies_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][10].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.375, zombies_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][11].update(zombies_loc[i].x + 0.0, agency_loc.y - 1.5, zombies_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    zombies[i][12].update(zombies_loc[i].x + 0.0, agency_loc.y - 1.5, zombies_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_WEREWOLFS; i++) {
+    // for (int j = 0; j < PARTS_WEREWOLF; j++) {
+    werewolfs[i][0].update(werewolves_loc[i].x + 0.0, agency_loc.y + 1.15, werewolves_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][1].update(werewolves_loc[i].x + 0.0, agency_loc.y + 0.75, werewolves_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][2].update(werewolves_loc[i].x + 0.3, agency_loc.y + 0.75, werewolves_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][3].update(werewolves_loc[i].x + 0.3, agency_loc.y + 0.75, werewolves_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][4].update(werewolves_loc[i].x + 0.4, agency_loc.y + 0.875, werewolves_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][5].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][6].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][7].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][8].update(werewolves_loc[i].x + 0.25, agency_loc.y - 0.125, werewolves_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][9].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.375, werewolves_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][10].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.375, werewolves_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][11].update(werewolves_loc[i].x + 0.0, agency_loc.y - 1.5, werewolves_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    werewolfs[i][12].update(werewolves_loc[i].x + 0.0, agency_loc.y - 1.5, werewolves_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
+    // }
+  }
+
+  for (int i = 0; i < NUM_AGENCIES; i++) {
+    // for (int j = 0; j < PARTS_AGENCIE; j++) {
+    agencies[i][0].update(agencies_loc[i].x + 0.0, agency_loc.y + 1.15, agencies_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][1].update(agencies_loc[i].x + 0.0, agency_loc.y + 0.75, agencies_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], SKIN_R, SKIN_G, SKIN_B, 0, 0, 0);
+    agencies[i][2].update(agencies_loc[i].x + 0.3, agency_loc.y + 0.75, agencies_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][3].update(agencies_loc[i].x + 0.3, agency_loc.y + 0.75, agencies_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][4].update(agencies_loc[i].x + 0.4, agency_loc.y + 0.875, agencies_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][5].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], SHIRT_R, SHIRT_G, SHIRT_B, 0, 0, 0);
+    agencies[i][6].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][7].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][8].update(agencies_loc[i].x + 0.25, agency_loc.y - 0.125, agencies_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][9].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.375, agencies_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][10].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.375, agencies_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][11].update(agencies_loc[i].x + 0.0, agency_loc.y - 1.5, agencies_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    agencies[i][12].update(agencies_loc[i].x + 0.0, agency_loc.y - 1.5, agencies_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
+    // }
+  }
+
   if (jump) {
     mv_vel.y += 0.75;
     jump = false;
@@ -554,23 +739,17 @@ void animation(void) {
 
   mv_vel.y -= 0.015;
 
-  for (int i = 0; i < 1; i++) {
-    collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, platform_loc[i], platform_size[i], collide[i]);
+  for (int i = 0; i < NUM_FLOORS; i++) {
+    for (int j = 0; j < PARTS_FLOOR; j++) {
+      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, vec3(floors[i][j].x, floors[i][j].y, floors[i][j].z), vec3(floors[i][j].w, floors[i][j].h, floors[i][j].d), collide[i]);
+      // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, platform_loc[i], platform_size[i], collide[i]);
+    }
   }
 
   if(!debug) {
     // for (int i = 0; i < NUM_OBJECTS; i++) {
       // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, wall_loc[i], wall_size[i], collide[i]);
     // }
-    // for (int i = 0; i < NUM_BOOKCASE; i++) {
-      // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, bookcase_loc[i], bookcase_size[i], collide[i]);
-    // }
-    // for (int i = 0; i < NUM_DOORS; i++) {
-      // if (!open_door[i]) collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, door_loc[i], door_size[i], collide[i]);
-    // }
-    for (int i = 0; i < NUM_TABLES; i++) {
-      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, table_loc[i], table_size[i], collide[i]);
-    }
     for (int i = 0; i < NUM_GHOSTS; i++) {
       collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, ghosts_loc[0], ghosts_size[0], g_die[0]);
     }

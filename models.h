@@ -2,6 +2,7 @@
 #define MODELS_H
 
 #include <Angel.h>
+#include "engine.h"
 
 #define FLOOR_SIZE 100
 #define NUM_TILES  50
@@ -230,6 +231,13 @@
 #define ZOMBIE_G 0.3
 #define ZOMBIE_B 0.1
 
+#define WEREWOLF_W 2.0
+#define WEREWOLF_H 2.0
+#define WEREWOLF_D 2.0
+#define WEREWOLF_R 0.1
+#define WEREWOLF_G 0.1
+#define WEREWOLF_B 0.1
+
 #define COFFEE_W 1.0
 #define COFFEE_H 1.0
 #define COFFEE_D 1.0
@@ -325,5 +333,226 @@
 #define FEATHER_RE 0.0
 #define FEATHER_GR 0.0
 #define FEATHER_BL 0.0
+
+#define FLOORS        0
+#define NUM_FLOORS    7
+#define PARTS_FLOOR   1
+
+#define MOONS         1
+#define NUM_MOONS     1
+#define PARTS_MOON    1
+
+#define GUNS          2
+#define NUM_GUNS      1
+#define PARTS_GUN     3
+
+#define KEYS          3
+#define NUM_KEYS      1
+#define PARTS_KEY     6
+
+#define VACCUUMS      4
+#define NUM_VACCUUMS  1
+#define PARTS_VACCUUM 11
+
+#define COFFEES       5
+#define NUM_COFFEES   1
+#define PARTS_COFFEE  4
+
+#define PLAYERS       6
+#define NUM_PLAYERS   1
+#define PARTS_PLAYER  4
+
+#define GHOSTS        7
+#define NUM_GHOSTS    1
+#define PARTS_GHOST   5
+
+#define ZOMBIES       8
+#define NUM_ZOMBIES   3
+#define PARTS_ZOMBIE  13
+
+#define WEREWOLFS     9
+#define NUM_WEREWOLFS 1
+#define PARTS_WEREWOLF 13
+
+#define AGENCIES      10
+#define NUM_AGENCIES  1
+#define PARTS_AGENCIE 13
+
+Object floors[NUM_FLOORS][PARTS_FLOOR];
+Object moons[NUM_MOONS][PARTS_MOON];
+Object guns[NUM_GUNS][PARTS_GUN];
+Object keys[NUM_KEYS][PARTS_KEY];
+Object vaccuums[NUM_VACCUUMS][PARTS_VACCUUM];
+Object coffees[NUM_COFFEES][PARTS_COFFEE];
+Object ghosts[NUM_GHOSTS][PARTS_GHOST];
+Object zombies[NUM_ZOMBIES][PARTS_ZOMBIE];
+Object werewolfs[NUM_WEREWOLFS][PARTS_WEREWOLF];
+Object agencies[NUM_AGENCIES][PARTS_AGENCIE];
+Object players[NUM_PLAYERS][PARTS_PLAYER];
+
+bool render_[AGENCIES + 1];
+
+// void load() {
+
+//     mat4  m;
+//
+//     m = RotateY( theta[Torso] );
+//     model[Torso] = Object( m, torso, NULL, &model[Head1] );
+//
+//     m = Translate(0.0, TORSO_HEIGHT+0.5*HEAD_HEIGHT, 0.0) *
+//       RotateX(theta[Head1]) *
+//       RotateY(theta[Head2]) *
+//       Translate(0.0, -0.5*HEAD_HEIGHT, 0.0);
+//
+//     model[Head1] = Object( m, head, &model[LeftUpperArm], NULL );
+//
+//     m = Translate(-(TORSO_WIDTH+UPPER_ARM_WIDTH), 0.9*TORSO_HEIGHT, 0.0) *
+// 	RotateX(theta[LeftUpperArm]);
+//     model[LeftUpperArm] =
+// 	Object( m, left_upper_arm, &model[RightUpperArm], &model[LeftLowerArm] );
+//
+//     m = Translate(TORSO_WIDTH+UPPER_ARM_WIDTH, 0.9*TORSO_HEIGHT, 0.0) *
+// 	RotateX(theta[RightUpperArm]);
+//     model[RightUpperArm] =
+// 	Object( m, right_upper_arm,
+// 	      &model[LeftUpperLeg], &model[RightLowerArm] );
+//
+//     m = Translate(-(TORSO_WIDTH+UPPER_LEG_WIDTH), 0.1*UPPER_LEG_HEIGHT, 0.0) *
+// 	RotateX(theta[LeftUpperLeg]);
+//     model[LeftUpperLeg] =
+// 	Object( m, left_upper_leg, &model[RightUpperLeg], &model[LeftLowerLeg] );
+//
+//     m = Translate(TORSO_WIDTH+UPPER_LEG_WIDTH, 0.1*UPPER_LEG_HEIGHT, 0.0) *
+// 	RotateX(theta[RightUpperLeg]);
+//     model[RightUpperLeg] =
+// 	Object( m, right_upper_leg, NULL, &model[RightLowerLeg] );
+//
+//     m = Translate(0.0, UPPER_ARM_HEIGHT, 0.0) * RotateX(theta[LeftLowerArm]);
+//     model[LeftLowerArm] = Object( m, left_lower_arm, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_ARM_HEIGHT, 0.0) * RotateX(theta[RightLowerArm]);
+//     model[RightLowerArm] = Object( m, right_lower_arm, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_LEG_HEIGHT, 0.0) * RotateX(theta[LeftLowerLeg]);
+//     model[LeftLowerLeg] = Object( m, left_lower_leg, NULL, NULL );
+//
+//     m = Translate(0.0, UPPER_LEG_HEIGHT, 0.0) * RotateX(theta[RightLowerLeg]);
+//     model[RightLowerLeg] = Object( m, right_lower_leg, NULL, NULL );
+
+  // floors[0].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, 50.0, ROOF_H, 50.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  //
+  // floors[1].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, ROOF_W, ROOF_H, 10.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  // floors[2].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, 10.0, ROOF_H, ROOF_D, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  //
+  // floors[3].create(mv, model_view, 50.0, 7.5, 50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  // floors[4].create(mv, model_view, -50.0, 7.5, 50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  // floors[5].create(mv, model_view, -50.0, 7.5, -50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+  // floors[6].create(mv, model_view, 50.0, 7.5, -50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
+
+// }
+
+// void traverse( Object node ) {
+//   // base case
+//   if ( node == NULL ) { return; }
+//
+//   // Recursive case, first remember the current transform.
+//   mvstack.push( model_view );
+//
+//   mv *= node.transform;
+//   node.render(mvstack);
+//   traverse( node.child );
+//
+//   //  if ( node->child != NULL) { traverse( node->child ); }
+//
+//   mv = mvstack.pop();
+//
+//   traverse( node.sibling );
+//   //  if ( node->sibling != NULL) { traverse( node->sibling ); }
+// }
+
+
+void render_models(/*MatrixStack stack,*/ bool hurt, bool hallucinate, color4 aps[], color4 dps[], color4 sps[], color4 light_ambients[], color4 light_diffuses[], color4 light_speculars[], GLuint ambient_product, GLuint diffuse_product, GLuint specular_product, GLuint ambient_product2, GLuint diffuse_product2, GLuint specular_product2, GLuint enable, float color_a_pink, color4 emissive[], GLuint Material_Emiss, GLuint shiny) {
+
+  if (render_[FLOORS]) {
+    for (int i = 0; i < NUM_FLOORS; i++) {
+      for (int j = 0; j < PARTS_FLOOR; j++) {
+        floors[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[MOONS]) {
+    for (int i = 0; i < NUM_MOONS; i++) {
+      for (int j = 0; j < PARTS_MOON; j++) {
+        moons[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[GUNS]) {
+    for (int i = 0; i < NUM_GUNS; i++) {
+      for (int j = 0; j < PARTS_GUN; j++) {
+        guns[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[KEYS]) {
+    for (int i = 0; i < NUM_KEYS; i++) {
+      for (int j = 0; j < PARTS_KEY; j++) {
+        keys[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[VACCUUMS]) {
+    for (int i = 0; i < NUM_VACCUUMS; i++) {
+      for (int j = 0; j < PARTS_VACCUUM; j++) {
+        vaccuums[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[COFFEES]) {
+    for (int i = 0; i < NUM_COFFEES; i++) {
+      for (int j = 0; j < PARTS_COFFEE; j++) {
+        coffees[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[GHOSTS]) {
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+      for (int j = 0; j < PARTS_GHOST; j++) {
+        ghosts[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[ZOMBIES]) {
+    for (int i = 0; i < NUM_ZOMBIES; i++) {
+      for (int j = 0; j < PARTS_ZOMBIE; j++) {
+        zombies[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[WEREWOLFS]) {
+    for (int i = 0; i < NUM_WEREWOLFS; i++) {
+      for (int j = 0; j < PARTS_WEREWOLF; j++) {
+        werewolfs[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[AGENCIES]) {
+    for (int i = 0; i < NUM_AGENCIES; i++) {
+      for (int j = 0; j < PARTS_AGENCIE; j++) {
+        agencies[i][j].render(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+}
 
 #endif
