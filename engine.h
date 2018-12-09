@@ -13,15 +13,8 @@
 #include "models.h"
 
 // Screen dimensions
-#define SCREEN_WIDTH  800
+#define SCREEN_WIDTH  600
 #define SCREEN_HEIGHT 600
-
-#define SKY_R 0.05
-#define SKY_G 0.0
-#define SKY_B 0.1
-
-#define COLOR_SKY 1
-//   vec3(0.8, 1.0, 1.0),
 
 // Drawing
 #define DRAW_DISTANCE 69.0
@@ -102,6 +95,12 @@ bool g_die[NUM_GHOSTS] = { false };
 
 bool z_die[NUM_ZOMBIES] = { false };
 
+bool w_die[NUM_WEREWOLFS] = { false };
+
+bool a_die[NUM_AGENCIES] = { false };
+
+bool p_die = false;
+
 GLfloat l = 0.0;
 GLfloat r = 0.0;
 GLfloat u = 0.0;
@@ -112,7 +111,7 @@ GLfloat b = 0.0;
 bool collider[6] = { false };
 
 bool jump = false,
-     fall = false;
+     fall = true;
 
 float red = 0.0, green = 0.5, blue = 1.0, color_a_pink = 0.0;
 
@@ -150,6 +149,9 @@ color4 dps[2] = { vec4(1.0, 1.0, 1.0, 1.0) };
 color4 sps[2] = { vec4(1.0, 1.0, 1.0, 1.0) };
 
 std::string score_text = "0";
+
+float sc_x = SCREEN_WIDTH / 600;
+float sc_y = SCREEN_HEIGHT / 600;
 
 void lighting () {
 
@@ -241,10 +243,14 @@ void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloa
           glUniform1f( enable, 1.0 );
           glDrawArrays( GL_TRIANGLES, NumVertices, NumVertices2 );
         glUniform4fv(Material_Emiss, 1, emissive[0]); break;
+      case 3:
+        glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
+        glUniform1f( enable, 0.0 );
+        glDrawArrays( GL_TRIANGLES, 0, NumVertices / 12 ); break;
       case 4:
         glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
         glUniform1f( enable, 0.0 );
-        glDrawArrays( GL_TRIANGLES, 0, NumVertices / 6 ); break;
+        glDrawArrays( GL_TRIANGLES, 0, NumVertices / 9 ); break;
 
     };
 
@@ -411,12 +417,14 @@ void collision (GLfloat &x, GLfloat &y, GLfloat &z, GLfloat w, GLfloat h, GLfloa
 }
 
 void proximity (GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result) {
-  if (x - w / 2 < loc.x + size.x + 2.6 / 2 && x + w / 2 > loc.x - size.x - 2.6 / 2 &&
-      y - h / 2 < loc.y + size.y + 2.6 / 2 && y + h / 2 > loc.y - size.y - 2.6 / 2 &&
-      z - d / 2 < loc.z + size.z + 2.6 / 2 && z + d / 2 > loc.z - size.z - 2.6 / 2 ) {
+  float m = 0.0;
+  if (x - w / 2 < (loc.x + (size.x + m) / 2) && x + w / 2 > (loc.x - (size.x - m) / 2) &&
+      y - h / 2 < (loc.y + (size.y + m) / 2) && y + h / 2 > (loc.y - (size.y - m) / 2) &&
+      z - d / 2 < (loc.z + (size.z + m) / 2) && z + d / 2 > (loc.z - (size.z - m) / 2) ) {
     result = true;
   } else {
-    result = false;
+
+    // result = false;
   }
 }
 
@@ -427,177 +435,18 @@ void reshape (int width, int height) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   // gluPerspective(100.0, (GLfloat) w / (GLfloat) h, 1.0, 30.0);
-  // aspect = GLfloat(width)/height;
-  gluPerspective(fovy, (GLfloat) width / (GLfloat) height /*aspect*/, zNear, zFar);
+  aspect = (GLfloat) width / (GLfloat) height;
+  gluPerspective(fovy, aspect, zNear, zFar);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   // glTranslatef(0.0, 1.2, -5.5);  /* viewing transform  */
   // glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
-  aspect = GLfloat(width)/height;
+  sc_x = width / 600.0;
+  sc_y = height / 600.0;
 
-}
-
-void load () {
-
-  // mat4 matr
-  // GLuint unif
-
-  // float x
-  // float y
-  // float z
-
-  // float ra
-  // float yax
-
-  // float w
-  // float h
-  // float d
-
-  // float r
-  // float g
-  // float b
-
-  // float pi
-  // float ya
-  // float ro
-
-  // float rta
-  // float rl
-
-  // float sli
-  // float sta
-  // float typ
-
-  // Object::material mat
-
-  // for (int i = 0; i < NUM_FLOORS; i++) {
-    for (int j = 0; j < PARTS_FLOOR; j++) {
-      floors[0][j].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, 50.0, ROOF_H, 50.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-
-      floors[1][j].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, ROOF_W, ROOF_H, 10.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-      floors[2][j].create(mv, model_view, -50.0 + FLOOR_SIZE / 2, -2.5, -50.0 + FLOOR_SIZE / 2, 10.0, ROOF_H, ROOF_D, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-
-      floors[3][j].create(mv, model_view, 50.0, 7.5, 50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-      floors[4][j].create(mv, model_view, -50.0, 7.5, 50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-      floors[5][j].create(mv, model_view, -50.0, 7.5, -50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-      floors[6][j].create(mv, model_view, 50.0, 7.5, -50.0, 25.0, ROOF_H, 25.0, ROOF_R, ROOF_G, ROOF_B, 0, 0, 0, 0, 0, 0, Object::wood);
-    }
-  // }
-
-  for (int i = 0; i < NUM_MOONS; i++) {
-    for (int j = 0; j < PARTS_MOON; j++) {
-      moons[i][j].create(mv, model_view, -75.0,  40.0, -65.0, MOON_W, MOON_H, MOON_D, MOON_R, MOON_G, MOON_B, 0, 0, 0, 6, 6, 2, Object::wood);
-    }
-  }
-
-  for (int i = 0; i < NUM_GUNS; i++) {
-    // for (int j = 0; j < PARTS_GUN; j++) {
-      guns[i][0].create(mv, model_view, 50 + 0.0*0.2, 10.0 + 0.0*0.2, 50 + -1.0*0.2, BARREL_W*0.2, BARREL_H*0.2, BARREL_D*0.2, BARREL_R, BARREL_G, BARREL_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      guns[i][1].create(mv, model_view, 50 - 0.4*0.2, 10.0 + -0.5*0.2, 50 + -1.75*0.2, SIGHT_W*0.2, SIGHT_H*0.2, SIGHT_D*0.2, SIGHT_R, SIGHT_G, SIGHT_B, 0, 0, 90, 0, 0, 0, Object::metal);
-      guns[i][2].create(mv, model_view, 50 + 0.05*0.2, 10.0 + -1.1*0.2, 50 + 0.0*0.2, HANDLE_W*0.2, HANDLE_H*0.2, HANDLE_D*0.2, HANDLE_R, HANDLE_G, HANDLE_B, 0, 90, 0, 0, 0, 0, Object::metal);
-    // }
-  }
-
-  for (int i = 0; i < NUM_KEYS; i++) {
-    // for (int j = 0; j < PARTS_KEY; j++) {
-      keys[i][0].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 + 0.0*0.2, -50.0 + 1.5*0.2, KEYL_W*0.2, KEYL_H*0.2, KEYL_D*0.2, KEY_R, KEY_G, KEY_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      keys[i][1].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 + 0.0*0.2, -50.0 - 0.5*0.2, KEYL_W*0.2, KEYL_H*0.2, KEYL_D*0.2, KEY_R, KEY_G, KEY_B, 90, 0, 0, 0, 0, 0, Object::metal);
-      keys[i][2].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 + 0.0*0.2, -50.0 - 2.5*0.2, KEYL_W*0.2, KEYL_H*0.2, KEYL_D*0.2, KEY_R, KEY_G, KEY_B, 90, 0, 0, 0, 0, 0, Object::metal);
-      keys[i][3].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 + 1.5*0.2, -50.0 - 1.5*0.2, KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      keys[i][4].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 - 1.5*0.2, -50.0 - 1.5*0.2, KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      keys[i][5].create(mv, model_view, 50.0 - 1.5*0.2, 10.0 - 1.0*0.2, -50.0 + 2.0*0.2, KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 90, 0, 0, 0, 0, 0, Object::metal);
-    // }
-  }
-
-  for (int i = 0; i < NUM_VACCUUMS; i++) {
-    // for (int j = 0; j < PARTS_VACCUUM; j++) {
-      vaccuums[i][0].create(mv, model_view, -50.0 + 0.0*0.2, 8.0 - 3.0*0.2, -50.0 + 0.0*0.2, BODYL_W*0.2, BODYL_H*0.2, BODYL_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][1].create(mv, model_view, -50.0 + 0.0*0.2, 8.0 + 0.5*0.2, -50.0 - 0.5*0.2, BODYS_W*0.2, BODYS_H*0.2, BODYS_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][2].create(mv, model_view, -50.0 + 2.5*0.2, 8.0 + 0.5*0.2, -50.0 + 1.0*0.2, HOSEL_W*0.203, HOSEL_H*0.2, HOSEL_D*0.203, HOSE_R, HOSE_G, HOSE_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][3].create(mv, model_view, -50.0 + 0.0*0.2, 8.0 + 2.5*0.2, -50.0 + 1.0*0.2, HOSEM_W*0.201, HOSEM_H*0.2, HOSEM_D*0.201, HOSE_R, HOSE_G, HOSE_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][4].create(mv, model_view, -50.0 + 1.25*0.2, 8.0 + 3.5*0.2, -50.0 + 1.0*0.2, HOSES_W*0.202, HOSES_H*0.2, HOSES_D*0.202, HOSE_R, HOSE_G, HOSE_B, 0, 0, 90, 0, 0, 0, Object::metal);
-      vaccuums[i][5].create(mv, model_view, -50.0 + 2.5*0.2, 8.0 - 2.5*0.2, -50.0 + 1.5*0.2, NOZZLE_W*0.2, NOZZLE_H*0.2, NOZZLE_D*0.2, HOSE_R, HOSE_G, HOSE_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][6].create(mv, model_view, -50.0 - 1.0*0.2, 8.0 - 1.5*0.2, -50.0 - 2.0*0.2, STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][7].create(mv, model_view, -50.0 + 1.0*0.2, 8.0 - 1.5*0.2, -50.0 - 2.0*0.2, STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][8].create(mv, model_view, -50.0 - 2.5*0.2, 8.0 - 3.5*0.2, -50.0 - 0.5*0.2, WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][9].create(mv, model_view, -50.0 + 2.5*0.2, 8.0 - 3.5*0.2, -50.0 - 0.5*0.2, WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, 0, 0, 0, 0, 0, Object::metal);
-      vaccuums[i][10].create(mv, model_view, -50.0 + 0.0*0.2, 8.0 + 0.5*0.2, -50.0 + 1.0*0.2, LIGHT_W*0.2, LIGHT_H*0.2, LIGHT_D*0.2, LIGHT_R, LIGHT_G, LIGHT_B, 0, 0, 0, 0, 0, 0, Object::glass);
-    // }
-  }
-
-  for (int i = 0; i < NUM_COFFEES; i++) {
-    // for (int j = 0; j < PARTS_COFFEE; j++) {
-      coffees[i][0].create(mv, model_view, -50.0 + 0.0*0.2, 10.0 - 0.8*0.2, 50.0 + 0.0*0.2, COFFEE_W*0.2, COFFEE_H*0.2, COFFEE_D*0.2, COFFEE_R, COFFEE_G, COFFEE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      coffees[i][1].create(mv, model_view, -50.0 + 0.0*0.2, 10.0 - 1.0*0.2, 50.0 + 0.0*0.2, CUP_W*0.2, CUP_H*0.2, CUP_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      coffees[i][2].create(mv, model_view, -50.0 + 0.0*0.2, 10.0 - 1.5*0.2, 50.0 + 0.0*0.2, SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 45, 0, 0, 0, 0, Object::ceramic);
-      coffees[i][3].create(mv, model_view, -50.0 + 0.0*0.2, 10.0 - 1.5*0.2, 50.0 + 0.0*0.2, SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-    // }
-  }
-
-  for (int i = 0; i < NUM_GHOSTS; i++) {
-    // for (int j = 0; j < PARTS_GHOST; j++) {
-      ghosts[i][0].create(mv, model_view, -17.5, 0.0 + 0.5, -5.0, 0.0, 0.0, 0.0, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      ghosts[i][1].create(mv, model_view, -17.5, 0.0 + 0.0, -5.0, 0.0*1.25, 0.0*1.25, 0.0*1.25, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      ghosts[i][2].create(mv, model_view, -17.5 + 0.5 * cos(105 * M_PI/180), 0.0 - 1.0, -5.0 + 0.5 * sin(105 * M_PI/180), 0.0/2, 0.0/2, 0.0/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45, 0, 0, 0, Object::ceramic);
-      ghosts[i][3].create(mv, model_view, -17.5 + 0.5 * cos(225 * M_PI/180), 0.0 - 1.0, -5.0 + 0.5 * sin(225 * M_PI/180), 0.0/2, 0.0/2, 0.0/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45, 0, 0, 0, Object::ceramic);
-      ghosts[i][4].create(mv, model_view, -17.5 + 0.5 * cos(345 * M_PI/180), 0.0 - 1.0, -5.0 + 0.5 * sin(345 * M_PI/180), 0.0/2, 0.0/2, 0.0/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45, 0, 0, 0, Object::ceramic);
-    // }
-  }
-
-  for (int i = 0; i < NUM_ZOMBIES; i++) {
-    // for (int j = 0; j < PARTS_ZOMBIE; j++) {
-      zombies[i][0].create(mv, model_view, 0.0 + 0.0, 0.0 + 1.15, 0.0 + 0.0, HAIR_W*1.0, HAIR_H*1.0, HAIR_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][1].create(mv, model_view, 0.0 + 0.0, 0.0 + 0.75, 0.0 + 0.0, FACE_W*1.0, FACE_H*1.0, FACE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][2].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 - 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][3].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 + 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][4].create(mv, model_view, 0.0 + 0.4, 0.0 + 0.875, 0.0 + 0.0, BRIDGE_W*1.0, BRIDGE_H*1.0, BRIDGE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][5].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.0, SHIRT_W*1.0, SHIRT_H*1.0, SHIRT_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][6].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 - 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][7].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][8].create(mv, model_view, 0.0 + 0.25, 0.0 - 0.125, 0.0 + 0.0, TIE_W*1.0, TIE_H*1.0, TIE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][9].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 - 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][10].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 + 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][11].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 - 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      zombies[i][12].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 + 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-    // }
-  }
-
-  for (int i = 0; i < NUM_WEREWOLFS; i++) {
-    // for (int j = 0; j < PARTS_WEREWOLF; j++) {
-      werewolfs[i][0].create(mv, model_view, 0.0 + 0.0, 0.0 + 1.15, 0.0 + 0.0, HAIR_W*1.0, HAIR_H*1.0, HAIR_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][1].create(mv, model_view, 0.0 + 0.0, 0.0 + 0.75, 0.0 + 0.0, FACE_W*1.0, FACE_H*1.0, FACE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][2].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 - 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][3].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 + 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][4].create(mv, model_view, 0.0 + 0.4, 0.0 + 0.875, 0.0 + 0.0, BRIDGE_W*1.0, BRIDGE_H*1.0, BRIDGE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][5].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.0, SHIRT_W*1.0, SHIRT_H*1.0, SHIRT_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][6].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 - 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][7].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][8].create(mv, model_view, 0.0 + 0.25, 0.0 - 0.125, 0.0 + 0.0, TIE_W*1.0, TIE_H*1.0, TIE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][9].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 - 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][10].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 + 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][11].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 - 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      werewolfs[i][12].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 + 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-    // }
-  }
-
-  for (int i = 0; i < NUM_AGENCIES; i++) {
-    // for (int j = 0; j < PARTS_AGENCIE; j++) {
-      agencies[i][0].create(mv, model_view, 0.0 + 0.0, 0.0 + 1.15, 0.0 + 0.0, HAIR_W*1.0, HAIR_H*1.0, HAIR_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][1].create(mv, model_view, 0.0 + 0.0, 0.0 + 0.75, 0.0 + 0.0, FACE_W*1.0, FACE_H*1.0, FACE_D*1.0, SKIN_R, SKIN_G, SKIN_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][2].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 - 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][3].create(mv, model_view, 0.0 + 0.3, 0.0 + 0.75, 0.0 + 0.175, LENS_W*1.0, LENS_H*1.0, LENS_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][4].create(mv, model_view, 0.0 + 0.4, 0.0 + 0.875, 0.0 + 0.0, BRIDGE_W*1.0, BRIDGE_H*1.0, BRIDGE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][5].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.0, SHIRT_W*1.0, SHIRT_H*1.0, SHIRT_D*1.0, SHIRT_R, SHIRT_G, SHIRT_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][6].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 - 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][7].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.25, 0.0 + 0.375, SUIT_W*1.0, SUIT_H*1.0, SUIT_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][8].create(mv, model_view, 0.0 + 0.25, 0.0 - 0.125, 0.0 + 0.0, TIE_W*1.0, TIE_H*1.0, TIE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][9].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 - 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][10].create(mv, model_view, 0.0 + 0.0, 0.0 - 0.375, 0.0 + 0.5, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][11].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 - 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-      agencies[i][12].create(mv, model_view, 0.0 + 0.0, 0.0 - 1.5, 0.0 + 0.25, APPENDAGE_W*1.0, APPENDAGE_H*1.0, APPENDAGE_D*1.0, AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0, 0, 0, 0, Object::ceramic);
-    // }
-  }
+  std::cout << sc_x << std::endl;
+  std::cout << sc_y << std::endl;
 
 }
 
@@ -626,7 +475,7 @@ void init(int argc, char **argv) {
   cube();
   tetrahedron(NumTimesToSubdivide);
 
-  load();
+  load(mv, model_view);
 
   for (int i = 0; i < 30; i++) {
     book_colors[i] = vec3(morpher1(mt), morpher2(mt), morpher3(mt));
@@ -695,7 +544,7 @@ void init(int argc, char **argv) {
   glUniform1i(Lights[1], lights[1]);
 
   glEnable(GL_DEPTH_TEST);
-  glClearColor(1.0, 1.0, 1.0, 1.0);
+  glClearColor(0.5, 0.5, 0.5, 1.0);
 
 }
 

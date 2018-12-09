@@ -7,9 +7,22 @@
 #include "game.h"
 #include "models.h"
 
+#define SKY_R 0.1
+#define SKY_G 0.0
+#define SKY_B 0.05
+// #define SKY_R 0.05
+// #define SKY_G 0.0
+// #define SKY_B 0.1
+// vec3 sky = vec3(0.8, 1.0, 1.0);
+
+#define COLOR_SKY 1
+
 // Motion rates
 #define RATE_PLAYER	  0.5
 #define RATE_GUN	    1
+
+// Color vec3s
+vec3 sky = vec3(SKY_R, SKY_G, SKY_B);
 
 std::uniform_real_distribution<double> dist_x(-7.0, 7.0);
 std::uniform_real_distribution<double> dist_z(-10.0, -6.0);
@@ -18,33 +31,42 @@ std::uniform_real_distribution<double> sickness(0.0, 0.005);
 // Game object locations
 vec3 player = vec3(0.0, 0.0, 6.0);
 
-// Color vec3s
-vec3 sky = vec3(0.8, 1.0, 1.0);
-vec3 feather = vec3(FEATHER_RE, FEATHER_GR, FEATHER_BL);
+vec3 ghosts_loc[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
+vec3 zombies_loc[NUM_ZOMBIES] = { vec3(0.0, 0.0, 0.0) };
+vec3 werewolves_loc[NUM_WEREWOLFS] = { vec3(0.0, 0.0, 0.0) };
+vec3 agencies_loc[NUM_AGENCIES] = { vec3(1.0, 1.0, 1.0) };
+vec3 ghosts_size[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
+vec3 zombies_size[NUM_ZOMBIES] = { vec3(0.0, 0.0, 0.0) };
+vec3 werewolves_size[NUM_WEREWOLFS] = { vec3(0.0, 0.0, 0.0) };
+vec3 agencies_size[NUM_AGENCIES] = { vec3(0.0, 0.0, 0.0) };
+vec3 pickup_size[NUM_PICKUPS] = { vec3(0.0, 0.0, 0.0) };
+
+GLfloat ghost_theta[NUM_GHOSTS] = { 0.0 };
+GLfloat agency_theta[NUM_AGENCIES] = { 0.0 };
+GLfloat werewolf_theta[NUM_WEREWOLFS] = { 0.0 };
+GLfloat zombie_theta[NUM_ZOMBIES] = { 0.0 };
+
+GLfloat disp_rot = 0.0;
 
 float display_rot = 0.0;
 
-float dart_x = 0.0, dart_z = 0.0;
 bool fire_gun = false, reload = true, action = false;
 float elevation = 0.0, frame = 3.0;
-int score = 0;
-int health = 5;
+int score = 0, health = 5, shield = 7, clip = 7;
 bool solid_part = true, game_over = false;
 
 GLfloat ghost_height[5] = { 0.0 },
-        bookcase_x[2] = { 20.0, 30.0 },
         zombie_height[6] = { 0.0 },
         bullet_dist[NUM_BULLETS];
 
-GLfloat wall_height = 5.0,
-        door_vert = 2.5,
+GLfloat gun_mult = 1.0,
+        key_mult = 1.0,
+        vacuum_mult = 1.0,
+        coffee_mult = 1.0,
         ghost_mult = 1.0,
-        bookcase_z = -45.0,
-        dizziness = 0.0,
-        nausea = 0.0,
+        agency_mult = 1.0,
         zombie_mult[NUM_ZOMBIES] = { 1.0, 1.0, 1.0 },
-        werewolf_mult[NUM_ZOMBIES] = { 1.0, 1.0, 1.0 },
-        door_height = 27.5,
+        werewolf_mult[NUM_WEREWOLFS] = { 1.0 },
         speed_boost = 1.0;
 
 vec3 zombie_loc[NUM_ZOMBIES] = {
@@ -53,44 +75,35 @@ vec3 zombie_loc[NUM_ZOMBIES] = {
   vec3(15.0, zombie_height[0], 32.5)
 };
 
-vec3 werewolf_loc[NUM_ZOMBIES] = {
+vec3 werewolf_loc[NUM_WEREWOLFS] = {
   vec3(10.0, zombie_height[0], 25.0),
-  vec3(10.0, zombie_height[0], 35.0),
-  vec3(15.0, zombie_height[0], 32.5)
 };
 
 vec3 bullet[NUM_BULLETS] = { vec3(0.0, 0.0, 0.0) };
+vec3 bullet_size = vec3(BULLET_W, BULLET_H, BULLET_D);
+vec3 bullet_color = vec3(0.28, 0.26, 0.1);
+GLfloat bullet_speed = 1.0;
 
 vec3 agency_loc = vec3(-51.0, 0.0, 10.0),
      ghost_loc = vec3(-17.5, ghost_height[0], -5.0),
-     picture_loc = vec3(12.5, 0.0, -1.0),
-     door_color = vec3(0.7, 0.6, 0.5);
+     picture_loc = vec3(12.5, 0.0, -1.0);
 
-int picture_rot = 225, flicker = 0, door_open[NUM_DOORS] = { 0 }, bullet_ang[NUM_BULLETS] = { 0 };
+int  bullet_ang[NUM_BULLETS] = { 0 };
 
 bool debug = false,
-     toggle = true,
-     draw_table = false,
-     door_collide = true,
-     open_door[NUM_DOORS] = { false },
+     view_toggle = true,
+     debug_toggle = true,
      werewolf_chase = false,
      ghost_chase = false,
-     get_sweeper = false,
-     kill_ghost = false,
-     sweep_ghost = false,
-     fix_picture = false,
-     lose_power = false,
-     bookcase_open = false,
-     //light_fire = false,
-     get_key = false,
      agency_chase = false,
      zombie_chase = false,
      get_gun = false,
-     kill_zombie[3] = { false },
-     //hit_glass = false,
+     get_vaccuum = false,
      get_coffee = false,
-     shut_door = false,
-     active[NUM_BULLETS] = { false };
+     get_key = false,
+     kill_ghost = false,
+     active[NUM_BULLETS] = { false },
+     sweep_ghost = false;
 
 bool rooms[NUM_ROOMS] = { false };
 bool displayed[NUM_ROOMS] = { false };
@@ -130,6 +143,273 @@ void set_room(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d){
   }
 }
 
+void check_keys() {
+
+  for (int i = 0; i < 256; i++) {
+    if (key_buffer[i]){
+      switch (i) {
+        case 033: { } break; // Escape Key
+        case 'Q': exit(EXIT_SUCCESS); break; // Quit
+        case 'w': { mv_vel.z -= speed_boost * sin(theta*M_PI/180)/2; mv_vel.x -= speed_boost * cos(theta*M_PI/180)/2; } break;
+        case 's': { mv_vel.z += speed_boost * sin(theta*M_PI/180)/2; mv_vel.x += speed_boost * cos(theta*M_PI/180)/2; } break;
+        case 'a': { mv_vel.x -= speed_boost * sin(theta*M_PI/180)/2; mv_vel.z += speed_boost * cos(theta*M_PI/180)/2; } break;
+        case 'd': { mv_vel.x += speed_boost * sin(theta*M_PI/180)/2; mv_vel.z -= speed_boost * cos(theta*M_PI/180)/2; } break;
+        case ' ': { if (!fall) jump = true; } break; // Action
+        case 'f': { action = true; } break; // Action
+        case '/': { if (reload) { fire_gun = true; reload = false; } } break; // Shoot
+        case '1': { if (get_gun) { bullet_size = vec3(BULLET_W, BULLET_H, BULLET_D); bullet_color = vec3(0.28, 0.26, 0.1); bullet_speed = 1.0; } } break; // Weapon 1
+        case '2': { if (get_gun) { bullet_size = vec3(ROCKET_W, ROCKET_H, ROCKET_D); bullet_color = vec3(0.27, 0.32, 0.17); bullet_speed = 0.5; } } break; // Weapon 2
+        case '3': { if (get_gun) { bullet_size = vec3(LASER_W, LASER_H, LASER_D); bullet_color = vec3(1.0, 0.25, 0.75); bullet_speed = 2.5; } } break; // Weapon 3
+        case 'c': if (view_toggle) { perspective = !perspective; view_toggle = false; } break; //fire
+        // Utility
+        case '-': /* lights[0] = !lights[0]; glUniform1i(Lights[0], lights[0]); */ health -= 1; break;
+        case '=': /* lights[1] = !lights[1]; glUniform1i(Lights[1], lights[1]); */ health += 1; break;
+        case 'W': { solid_part = !solid_part; } break; //wire
+        case 'z': zNear *= 1.1; zFar /= 1.1; break;
+        case 'Z': zNear /= 1.1; zFar *= 1.1; break;
+        case 'r': radius *= 1.5; break;
+        case 'R': radius /= 1.5; break;
+        case 'v': fovy -= 5; if (fovy < 0) { fovy = 1; } break;
+        case 'V': fovy += 5; /* break; */ if (fovy > 179) { fovy = 179; } break;
+        case '~': zNear = 0.1; zFar = 300.0; radius = 3.0; theta = 0.0; phi = 0.0; break; // reset
+        case '`': if (debug_toggle) { debug = !debug; debug_toggle = false; } break;
+        default: { } break; // Default
+
+      }
+    } else {
+      switch (i) {
+        case '/': fire_gun = false; break; // Stop firing, not the same as bullet landing
+        case ' ': { jump = false; } break; //wire
+        case 'f': { action = false; } break; //wire
+        case 'c': { view_toggle = true; } break; //fire
+        case '`': { debug_toggle = true; } break; //fire
+      }
+    }
+
+    if (spec_buffer[i]) {
+      switch (i) {
+        case GLUT_KEY_RIGHT: theta += dr; break; // Look angle right
+        case GLUT_KEY_LEFT:  theta -= dr; break; // Look angle left
+        case GLUT_KEY_DOWN:  phi += dr;   break; // Look angle down
+        case GLUT_KEY_UP:    phi -= dr;   break; // Look angle up
+      }
+    }
+  }
+
+}
+
+void chase(vec3 &chaser, vec3 chasee, float &chaser_theta, float speed) {
+
+  float x_len = 0, y_len = 0;
+
+  if (chaser.x != chasee.x) {
+    if (chaser.x - chasee.x < 0) { chaser.x += speed; }
+    if (chaser.x - chasee.x > 0) { chaser.x -= speed; }
+  }
+  if (chaser.z != chasee.z) {
+    if (chaser.z - chasee.z < 0) { chaser.z += speed; }
+    if (chaser.z - chasee.z > 0) { chaser.z -= speed; }
+  }
+
+  x_len = chaser.x - chasee.x;
+  y_len = chaser.z - chasee.z;
+
+  chaser_theta = -(atan(x_len/(y_len + 0.01)) * 180 / M_PI) + 90;
+
+}
+
+void move_and_face(Object &actor, vec3 loc, vec3 size, vec3 growth, vec3 color, vec3 center_loc, vec3 rot) {
+  actor.update(
+    vec3(loc.x + center_loc.z * cos((rot.y + center_loc.x) * M_PI/180), loc.y + center_loc.y, loc.z + center_loc.z * sin((rot.y + center_loc.x) * M_PI/180)),
+    vec3(size.x * growth.x, size.y * growth.y, size.z * growth.z),
+    vec3(color.x, color.y, color.z),
+    vec3(rot.x, -rot.y, rot.z)
+  );
+}
+
+void update_everything() {
+
+  pickup_size[4] = vec3(1.0, 1.0, 1.0);
+  pickup_size[5] = vec3(2.5, 1.0, 2.5);
+  pickup_size[6] = vec3(2.5, 1.0, 2.5);
+  pickup_size[7] = vec3(2.5, 1.0, 2.5);
+
+  for (int i = 0; i < NUM_GUNS; i++) {
+    for (int j = 0; j < PARTS_GUN; j++) {
+      move_and_face(
+        guns[i][j],
+        gun_loc[i],
+        gun_parts_size[j],
+        vec3(gun_mult, gun_mult, gun_mult),
+        gun_parts_colors[j],
+        gun_parts_diff[j],
+        vec3(0, display_rot, 0)
+      );
+    }
+  }
+
+  for (int i = 0; i < NUM_KEYS; i++) {
+    for (int j = 0; j < PARTS_KEY; j++) {
+      move_and_face(
+        keys[i][j],
+        key_loc[i],
+        key_parts_size[j],
+        vec3(key_mult, key_mult, key_mult),
+        key_parts_colors[j],
+        key_parts_diff[j],
+        vec3(0, display_rot, 0)
+      );
+    }
+  }
+
+  for (int i = 0; i < NUM_VACCUUMS; i++) {
+    for (int j = 0; j < PARTS_VACCUUM; j++) {
+      move_and_face(
+        vaccuums[i][j],
+        vacuum_loc[i],
+        vacuum_parts_size[j],
+        vec3(vacuum_mult, vacuum_mult, vacuum_mult),
+        vacuum_parts_colors[j],
+        vacuum_parts_diff[j],
+        vec3(0, display_rot, 0)
+      );
+    }
+  }
+
+  vec3 coffee_parts_rot[PARTS_COFFEE] = {
+    vec3(0.0, display_rot - 45.0, 0.0),
+    vec3(0.0, display_rot, 0.0),
+    vec3(0.0, display_rot - 45.0, 0.0),
+    vec3(0.0, display_rot, 0.0),
+    vec3(0.0, display_rot - 45.0, 0.0),
+    vec3(0.0, display_rot, 0.0)
+  };
+
+  for (int i = 0; i < NUM_COFFEES; i++) {
+    for (int j = 0; j < PARTS_COFFEE; j++) {
+      move_and_face(
+        coffees[i][j],
+        coffee_loc[i],
+        coffee_parts_size[j],
+        vec3(coffee_mult, coffee_mult, coffee_mult),
+        coffee_parts_colors[j],
+        coffee_parts_diff[j],
+        coffee_parts_rot[j]
+      );
+    }
+  }
+
+  // for (int i = 0; i < NUM_GHOSTS; i++) {
+  //   // for (int j = 0; j < PARTS_GHOST; j++) {
+        // void character() {
+        //   object(mv, model_view, mv_pos.x + 0.0, mv_pos.y + 1.15, mv_pos.z + 0.0, HAIR_W, HAIR_H, HAIR_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.0, mv_pos.y + 0.75, mv_pos.z + 0.0, FACE_W, FACE_H, FACE_D, SKIN_R, SKIN_G, SKIN_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x - 0.4 * cos((theta - 30) * M_PI/180), mv_pos.y + 0.75, mv_pos.z - 0.4 * sin((theta - 30) * M_PI/180), LENS_W, LENS_H, LENS_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x - 0.4 * cos((theta + 30) * M_PI/180), mv_pos.y + 0.75, mv_pos.z - 0.4 * sin((theta + 30) * M_PI/180), LENS_W, LENS_H, LENS_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x - 0.4 * cos(theta * M_PI/180), mv_pos.y + 0.875, mv_pos.z - 0.4 * sin(theta * M_PI/180), BRIDGE_W, BRIDGE_H, BRIDGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.0, mv_pos.y - 0.25, mv_pos.z + 0.0, SHIRT_W, SHIRT_H, SHIRT_D, SHIRT_R, SHIRT_G, SHIRT_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.1 * cos(theta * M_PI/180), mv_pos.y - 0.25, mv_pos.z + 0.1 * sin(theta * M_PI/180), SHIRT_W, SHIRT_H, SHIRT_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x - 0.25 * cos((theta - 0) * M_PI/180), mv_pos.y - 0.125, mv_pos.z - 0.25 * sin((theta - 0) * M_PI/180), TIE_W, TIE_H, TIE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.375 * cos((theta - 90) * M_PI/180), mv_pos.y - 0.25, mv_pos.z + 0.375  * sin((theta - 90) * M_PI/180), SUIT_W, SUIT_H, SUIT_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.375 * cos((theta + 90) * M_PI/180), mv_pos.y - 0.25, mv_pos.z + 0.375 * sin((theta + 90) * M_PI/180), SUIT_W, SUIT_H, SUIT_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.5 * cos((theta - 90) * M_PI/180), mv_pos.y - 0.375, mv_pos.z + 0.5 * sin((theta - 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.5 * cos((theta + 90) * M_PI/180), mv_pos.y - 0.375, mv_pos.z + 0.5 * sin((theta + 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.25 * cos((theta - 90) * M_PI/180), mv_pos.y - 1.5, mv_pos.z + 0.25 * sin((theta - 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        //   object(mv, model_view, mv_pos.x + 0.25 * cos((theta + 90) * M_PI/180), mv_pos.y - 1.5, mv_pos.z + 0.25 * sin((theta + 90) * M_PI/180), APPENDAGE_W, APPENDAGE_H, APPENDAGE_D, AGENCY_R, AGENCY_G, AGENCY_B, 0, -theta, 0, 0, 0, 0); // translate down half of the object
+        // }
+  //   // }
+  // }
+
+  vec3 ghost_parts_diff[PARTS_GHOST] = {
+    vec3(ghosts_loc[0].x, ghost_height[0] + 0.5, ghosts_loc[0].z),
+    vec3(ghosts_loc[0].x, ghost_height[1] + 0.0, ghosts_loc[0].z),
+    vec3(ghosts_loc[0].x + 0.5 * cos(105 * M_PI/180), ghost_height[2] - 1.0, ghosts_loc[0].z + 0.5 * sin(105 * M_PI/180)),
+    vec3(ghosts_loc[0].x + 0.5 * cos(225 * M_PI/180), ghost_height[3] - 1.0, ghosts_loc[0].z + 0.5 * sin(225 * M_PI/180)),
+    vec3(ghosts_loc[0].x + 0.5 * cos(345 * M_PI/180), ghost_height[4] - 1.0, ghosts_loc[0].z + 0.5 * sin(345 * M_PI/180))
+  };
+
+  vec3 ghost_parts_size[PARTS_GHOST] = {
+    vec3(ghosts_size[0].x, ghosts_size[0].y, ghosts_size[0].z),
+    vec3(ghosts_size[0].x*1.25, ghosts_size[0].y*1.25, ghosts_size[0].z*1.25),
+    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
+    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
+    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
+  };
+
+  ghosts_loc[0] = vec3(ghost_loc.x*ghost_mult, ghost_height[0]*ghost_mult, ghost_loc.z*ghost_mult);
+  ghosts_size[0] = vec3(GHOST_W*ghost_mult, GHOST_H*ghost_mult, GHOST_D*ghost_mult);
+
+  for (int i = 0; i < NUM_GHOSTS; i++) {
+    for (int j = 0; j < PARTS_GHOST; j++) {
+      move_and_face(
+        ghosts[i][j],
+        ghost_loc[i],
+        ghost_parts_size[j],
+        vec3(ghost_mult, ghost_mult, ghost_mult),
+        ghost_parts_colors[j],
+        ghost_parts_diff[j],
+        vec3(ghost_parts_rot[j].x, ghost_theta[i], ghost_parts_rot[j].z)
+      );
+    }
+  }
+
+  zombies_loc[0] = vec3(zombie_loc[0].x*zombie_mult[0], zombie_height[0]*zombie_mult[0], zombie_loc[0].z*zombie_mult[0]);
+  zombies_loc[1] = vec3(zombie_loc[1].x*zombie_mult[1], zombie_height[0]*zombie_mult[1], zombie_loc[1].z*zombie_mult[1]);
+  zombies_loc[2] = vec3(zombie_loc[2].x*zombie_mult[2], zombie_height[0]*zombie_mult[2], zombie_loc[2].z*zombie_mult[2]);
+
+  for(int i = 0; i < NUM_ZOMBIES; i++) {
+    zombies_size[i] = vec3(ZOMBIE_W*zombie_mult[i], ZOMBIE_H*zombie_mult[i], ZOMBIE_D*zombie_mult[i]);
+  }
+
+  for (int i = 0; i < NUM_ZOMBIES; i++) {
+    for (int j = 0; j < PARTS_ZOMBIE; j++) {
+      move_and_face(
+        zombies[i][j],
+        zombies_loc[i],
+        zomb_parts_size[j],
+        vec3(zombie_mult[i], zombie_mult[i], zombie_mult[i]),
+        zomb_parts_colors[j],
+        zomb_parts_diff[j],
+        vec3(0, zombie_theta[i], 0)
+      );
+    }
+  }
+
+  werewolves_loc[0] = vec3(werewolf_loc[0].x*werewolf_mult[0], werewolf_loc[0].y*werewolf_mult[0], werewolf_loc[0].z*werewolf_mult[0]);
+  // werewolfs_size[2] = vec3(ZOMBIE_W*werewolf_mult[2], ZOMBIE_H*werewolf_mult[2], ZOMBIE_D*werewolf_mult[2]);
+
+  for (int i = 0; i < NUM_WEREWOLFS; i++) {
+    for (int j = 0; j < PARTS_WEREWOLF; j++) {
+      move_and_face(
+        werewolfs[i][j],
+        werewolves_loc[i],
+        wolf_parts_size[j],
+        vec3(werewolf_mult[i], werewolf_mult[i], werewolf_mult[i]),
+        wolf_parts_colors[j],
+        wolf_parts_diff[j],
+        vec3(0, werewolf_theta[i], 0)
+      );
+    }
+  }
+
+  agencies_loc[0] = vec3(agency_loc.x, agency_loc.y, agency_loc.z);
+
+  for (int i = 0; i < NUM_AGENCIES; i++) {
+    for (int j = 0; j < PARTS_AGENCIE; j++) {
+      move_and_face(
+        agencies[i][j],
+        agencies_loc[i],
+        agen_parts_size[j],
+        vec3(agency_mult, agency_mult, agency_mult),
+        agen_parts_colors[j],
+        agen_parts_diff[j],
+        vec3(0, agency_theta[i], 0)
+      );
+    }
+  }
+
+}
+
 // animation function, runs the updating of the variables
 void animation(void) {
 
@@ -142,6 +422,8 @@ void animation(void) {
 
   set_room(mv_pos.x, 0.0, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D);
 
+  check_keys();
+
   // if (rotatep) move_angle += 20.0 / 1000.0 * (time - lasttime);
 
   // doorAngle += doorAngleIncr / 1000.0 * (time - lasttime);
@@ -149,10 +431,6 @@ void animation(void) {
   // if (doorAngle > 60.0) doorAngleIncr *= -1.0;
 
   // if (doorAngle < 0.0) { doorAngle = 0.0; doorAngleIncr *= -1.0; }
-
-
-
-
 
   // // Do the animation code here in idle, not in display. Code for moving 2nd cube
 
@@ -164,147 +442,22 @@ void animation(void) {
 
   static int step;
 
-  if (pickup[0]){
-    get_sweeper = true;
-  }
-  if (pickup[1]){
-    get_key = true;
-  }
-  if (pickup[2]){
-    get_gun = true;
-  }
-  if (pickup[3]){
-    get_coffee = true;
-  }
+  if (pickup[0]) { get_gun = true; }
+  if (pickup[1]) { get_vaccuum = true; }
+  if (pickup[2]) { get_key = true; }
+  if (pickup[3]) { get_coffee = true; }
 
-  if (rooms[0]) {
-    agency_chase = true;
-    // if (doors[0]){
-    //   if (action) {
-    //     open_door[0] = true;
-    //   }
-    // }
-    // if (doors[8]){
-    //   if (action) {
-    //     open_door[8] = true;
-    //   }
-    // }
-  } else { agency_chase = false; }
+  if (rooms[0]) { agency_chase = true; }
+  else { agency_chase = false; }
 
-  if (rooms[1]) {
-    werewolf_chase = true;
-    // if (doors[1]){
-    //   if (action) {
-    //     open_door[1] = true;
-    //   }
-    // }
-  } else { werewolf_chase = false; }
+  if (rooms[1]) { werewolf_chase = true; }
+  else { werewolf_chase = false; }
 
-  if (rooms[2]) {
-    ghost_chase = true;
-    // if (doors[2]){
-    //   if (action) {
-    //     open_door[2] = true;
-    //   }
-    // }
-    // if (doors[9]){
-    //   if (action) {
-    //     open_door[9] = true;
-    //   }
-    // }
-  }
+  if (rooms[2]) { ghost_chase = true; }
   else { ghost_chase = false; }
 
-  if (rooms[3]) {
-    zombie_chase = true;
-    // if (proximal[2]){
-    //   if (action) {
-    //     fix_picture = true;
-    //   }
-    // }
-    // if (doors[3]){
-    //   if (action) {
-    //     open_door[3] = true;
-    //   }
-    // }
-  } else {
-    zombie_chase = false;
-    // lose_power = false;
-  }
-
-  if (rooms[4]) {
-    // lights[0] = true;
-    // glUniform1i(Lights[0], lights[0]);
-    // lights[1] = true;
-    // glUniform1i(Lights[1], lights[1]);
-    // agency_loc = vec3(12.5, 0.0, -51.0);
-    // if (proximal[3]){
-    //   if (action) {
-    //     bookcase_open = true;
-    //   }
-    // }
-  } else {
-    // bookcase_open = false;
-  }
-
-  if (rooms[5]) {
-    if (doors[4]){
-      if (action) {
-        if (get_key) {
-          open_door[4] = true;
-        }
-      }
-    }
-  } else { }
-
-  if (rooms[6]) {
-    // if (!agency_chase) {
-      // agency_loc = vec3(45.0, 0.0, 15.0);
-    // }
-    // hallucinate = true;
-    // agency_chase = true;
-    // dizziness = sickness(mt);
-    // nausea += 0.001 + dizziness;
-    // phi = 25 * -sin(nausea *180/M_PI);
-    // theta = -90 + 25 * cos((nausea *180/M_PI)/2);
-    if (doors[5]){
-      if (action) {
-        open_door[5] = true;
-      }
-    }
-  } else {
-    hallucinate = false;
-    // agency_chase = false;
-  }
-
-  if (rooms[7]) {
-    // zombie_chase = true;
-    if (doors[6]){
-      if (action) {
-        open_door[6] = true;
-      }
-    }
-    if (doors[10]){
-      if (action) {
-        open_door[10] = true;
-      }
-    }
-  }
-  else { /*zombie_chase = false;*/ }
-
-  if (rooms[8]) {
-    // agency_loc = vec3(51.0, 0.0, 30.0);
-    if (doors[7]){
-      if (action) {
-        open_door[7] = true;
-      }
-    }
-  } else { }
-
-  if (rooms[9]) {
-    shut_door = true;
-  }
-  else { shut_door = false; }
+  if (rooms[3]) { zombie_chase = true; }
+  else { zombie_chase = false; }
 
   if (frame >= 0.0 && frame <= 360.0) {
     if (step == 0 || step == 2) {
@@ -322,26 +475,6 @@ void animation(void) {
       //   display_rot = 0.0;
       // }
 
-      if (lose_power && flicker < 7) {
-        lights[0] = !lights[0];
-        glUniform1i(Lights[0], lights[0]);
-        flicker++;
-      }
-
-      if (lose_power && flicker >= 7 && flicker < 15) {
-        flicker++;
-        // agency_loc = vec3(12.5, 0.0, -12.5);
-        door_color = vec3(0.25, 0.15, 0.05);
-        open_door[3] = true;
-      }
-
-      if (lose_power && flicker >= 15) {
-        lights[0] = false;
-        glUniform1i(Lights[0], lights[0]);
-        lights[1] = false;
-        glUniform1i(Lights[1], lights[1]);
-      }
-
     } else if (step == 1 || step == 3) {
 
       if (frame == 0.0) step++;
@@ -352,12 +485,6 @@ void animation(void) {
 
       display_rot = -frame;
 
-      if (lose_power && flicker < 7) {
-        lights[1] = !lights[1];
-        glUniform1i(Lights[1], lights[1]);
-        flicker++;
-      }
-
     }
 
   }
@@ -366,32 +493,19 @@ void animation(void) {
 
   if (health == 0) death = true;
 
-  for (int i = 0; i < NUM_DOORS; i++) {
-    if (door_open[i] < 90) { // door_rot[i] + 90) {
-      if (open_door[i]) { door_open[i] += 0.1 * (time - lasttime); }
+  if (ghost_chase) { chase(ghost_loc, mv_pos, ghost_theta[0], 0.1); }
+
+  if (agency_chase) { chase(agency_loc, mv_pos, agency_theta[0], 0.1); }
+
+  if (werewolf_chase) { chase(werewolf_loc[0], mv_pos, werewolf_theta[0], 0.05); }
+
+  if (zombie_chase) {
+    for (int i = 0; i < NUM_ZOMBIES; i++) {
+        chase(zombie_loc[i], mv_pos, zombie_theta[i], (i + 1) * 0.05);
     }
   }
 
-  if (ghost_chase) {
-    if (ghost_loc.x != mv_pos.x) {
-      if (ghost_loc.x - mv_pos.x < 0) {
-        ghost_loc.x += 0.1;
-      }
-      if (ghost_loc.x - mv_pos.x > 0) {
-        ghost_loc.x -= 0.1;
-      }
-    }
-    if (ghost_loc.z != mv_pos.z) {
-      if (ghost_loc.z - mv_pos.z < 0) {
-        ghost_loc.z += 0.1;
-      }
-      if (ghost_loc.z - mv_pos.z > 0) {
-        ghost_loc.z -= 0.1;
-      }
-    }
-  }
-
-  if (get_sweeper) {
+  if (get_vaccuum) {
     if (g_die[0]) kill_ghost = true;
   } else {
     if (g_die[0]) {
@@ -406,195 +520,64 @@ void animation(void) {
     }
   }
 
-  if (picture_rot < 270) {
-    if (fix_picture) { picture_rot += 1; }
-  } else {
-    lose_power = true;
-  }
-
-  if (bookcase_z < -37.5) {
-    if (bookcase_open) { bookcase_z += 0.075; }
-  }
-
-  if (bookcase_x[0] > 15.0) {
-    if (bookcase_open) { bookcase_x[0] -= 0.075; }
-  }
-
-  if (bookcase_x[1] < 35.0) {
-    if (bookcase_open) { bookcase_x[1] += 0.075; }
-  }
-
-  if (get_key) {
-
-  }
-
-  if (agency_chase) {
-    if (agency_loc.x != mv_pos.x) {
-      if (agency_loc.x - mv_pos.x < 0) {
-        agency_loc.x += 0.1;
-      }
-      if (agency_loc.x - mv_pos.x > 0) {
-        agency_loc.x -= 0.1;
-      }
-    }
-    if (agency_loc.z != mv_pos.z) {
-      if (agency_loc.z - mv_pos.z < 0) {
-        agency_loc.z += 0.1;
-      }
-      if (agency_loc.z - mv_pos.z > 0) {
-        agency_loc.z -= 0.1;
-      }
-    }
-  }
-
-  if (werewolf_chase) {
-    if (werewolf_loc[0].x != mv_pos.x) {
-      if (werewolf_loc[0].x - mv_pos.x < 0) {
-        werewolf_loc[0].x += 0.1;
-      }
-      if (werewolf_loc[0].x - mv_pos.x > 0) {
-        werewolf_loc[0].x -= 0.1;
-      }
-    }
-    if (werewolf_loc[0].z != mv_pos.z) {
-      if (werewolf_loc[0].z - mv_pos.z < 0) {
-        werewolf_loc[0].z += 0.1;
-      }
-      if (werewolf_loc[0].z - mv_pos.z > 0) {
-        werewolf_loc[0].z -= 0.1;
-      }
-    }
-  }
-
-  if (zombie_chase) {
-    for (int i = 0; i < NUM_ZOMBIES; i++) {
-      if (zombie_loc[i].x != mv_pos.x) {
-        if (zombie_loc[i].x - mv_pos.x < 0) {
-          zombie_loc[i].x += (i + 1) * 0.05;
-        }
-        if (zombie_loc[i].x - mv_pos.x > 0) {
-          zombie_loc[i].x -= (i + 1) * 0.05;
-        }
-      }
-      if (zombie_loc[i].z != mv_pos.z) {
-        if (zombie_loc[i].z - mv_pos.z < 0) {
-          zombie_loc[i].z += (i + 1) * 0.05;
-        }
-        if (zombie_loc[i].z - mv_pos.z > 0) {
-          zombie_loc[i].z -= (i + 1) * 0.05;
-        }
-      }
-    }
-  }
+  if (get_key) { exit(EXIT_SUCCESS); }
 
   if (get_gun) {
     for (int i = 0; i < NUM_ZOMBIES; i++) {
-      if (z_die[i]) kill_zombie[i] = true;
-    }
-  } else {
-    if (z_die[0] || z_die[1] || z_die[2]) {
-      health--;
-      hurt = true;
-    }// exit(EXIT_FAILURE);
-  }
-
-  for (int i = 0; i < NUM_ZOMBIES; i++) {
-    if (kill_zombie[i]) {
-      if (zombie_mult[i] >= 0.0) {
-        zombie_mult[i] -= 0.01;
+      if (z_die[i]) {
+        if (zombie_mult[i] >= 0.0) {
+          zombie_mult[i] -= 0.01;
+        }
       }
     }
+    for (int i = 0; i < NUM_WEREWOLFS; i++) {
+      if (w_die[i]) {
+        if (werewolf_mult[i] >= 0.0) {
+          werewolf_mult[i] -= 0.01;
+        }
+      }
+    }
+    for (int i = 0; i < NUM_AGENCIES; i++) {
+      if (a_die[i]) {
+        if (agency_mult >= 0.0) {
+          agency_mult -= 0.01;
+        }
+      }
+    }
+    if (fire_gun) {
+      // reload = false;
+      for (int i = 0; i < NUM_BULLETS; i++) {
+        if (!active[i]) {
+          active[i] = true;
+          bullet[i] = vec3(mv_pos.x, mv_pos.y, mv_pos.z);
+          bullet_ang[i] = theta;
+          bullet_dist[i] = 0.0;
+          break;
+        }
+      }
+    } else {
+      reload = true;
+    }
   }
+
+  if (p_die) {
+    health--;
+    hurt = true;
+  }// exit(EXIT_FAILURE);
 
   if(hurt) {
     mv_vel.z += 20.0 * sin(theta*M_PI/180)/2;
     mv_vel.x += 20.0 * cos(theta*M_PI/180)/2;
   }
 
-  if (door_height > wall_height) {
-    if (shut_door) { door_height -= 0.075; }
-  }
+  if (get_coffee) { speed_boost = 2.0; }
 
-  if (get_coffee) {
-    speed_boost = 2.0;
-  }
-
-  title_bar = "Score: " + std::to_string(collider[1]) + " Darts: " + std::to_string(mv_vel.y) + " bool: " + std::to_string(0.01 * (time - lasttime)); // + " l:" + std::to_string(l) + " r:" + std::to_string(r) + " f:" + std::to_string(f) + " b:" + std::to_string(b);
+  title_bar = " X: " + std::to_string(mv_pos.x)
+            + " Y: " + std::to_string(mv_pos.y)
+            + " Z: " + std::to_string(mv_pos.z);
+            // 0.01 * (time - lasttime)); // + " l:" + std::to_string(l) + " r:" + std::to_string(r) + " f:" + std::to_string(f) + " b:" + std::to_string(b);
 
   if (mouse_button == 3 && changed) { fovy -= 5.0; changed = false; } else if (mouse_button == 4 && changed) { fovy += 5.0; changed = false; }
-
-  for (int i = 0; i < 256; i++) {
-
-    if (key_buffer[i]){
-      switch (i) {
-        case 033: { } break; // Escape Key
-        case 'Q': exit(EXIT_SUCCESS); break; // Quit
-        case 'w': { mv_vel.z -= speed_boost * sin(theta*M_PI/180)/2; mv_vel.x -= speed_boost * cos(theta*M_PI/180)/2; } break;
-        case 's': { mv_vel.z += speed_boost * sin(theta*M_PI/180)/2; mv_vel.x += speed_boost * cos(theta*M_PI/180)/2; } break;
-        case 'a': { mv_vel.x -= speed_boost * sin(theta*M_PI/180)/2; mv_vel.z += speed_boost * cos(theta*M_PI/180)/2; } break;
-        case 'd': { mv_vel.x += speed_boost * sin(theta*M_PI/180)/2; mv_vel.z -= speed_boost * cos(theta*M_PI/180)/2; } break;
-        case ' ': { if (!fall) jump = true; } break; // Action
-        case 'f': { action = true; } break; // Action
-        case '/': { if (reload) { fire_gun = true; } } break; // Shoot
-        case '1': { hallucinate = !hallucinate; } break; // Weapon 1
-        case '2': { } break; // Weapon 2
-        case '3': { } break; // Weapon 3
-        case 'c': if (toggle) { perspective = !perspective; toggle = false; } break; //fire
-        // Utility
-        case '-': /* lights[0] = !lights[0]; glUniform1i(Lights[0], lights[0]); */ health -= 1; break;
-        case '=': /* lights[1] = !lights[1]; glUniform1i(Lights[1], lights[1]); */ health += 1; break;
-        case 'W': { solid_part = !solid_part; } break; //wire
-        case 'z': zNear *= 1.1; zFar /= 1.1; break;
-        case 'Z': zNear /= 1.1; zFar *= 1.1; break;
-        case 'r': radius *= 1.5; break;
-        case 'R': radius /= 1.5; break;
-        case 'v': fovy -= 5; if (fovy < 0) { fovy = 1; } break;
-        case 'V': fovy += 5; /* break; */ if (fovy > 179) { fovy = 179; } break;
-        case '~': zNear = 0.1; zFar = 300.0; radius = 3.0; theta = 0.0; phi = 0.0; break; // reset
-        case '`': if (toggle) { debug = !debug; toggle = false; } break;
-        default: { } break; // Default
-
-      }
-    } else {
-      switch (i) {
-        case '/': fire_gun = false; break; // Stop firing, not the same as bullet landing
-        // case 'w': { mv_vel.z = 0.0; mv_vel.x = 0.0; } break;
-        // case 's': { mv_vel.z = 0.0; mv_vel.x = 0.0; } break;
-        // case 'a': { mv_vel.x = 0.0; mv_vel.z = 0.0; } break;
-        // case 'd': { mv_vel.x = 0.0; mv_vel.z = 0.0; } break;
-        case ' ': { jump = false; } break; //wire
-        case 'f': { action = false; } break; //wire
-        case 'c': { toggle = true; } break; //fire
-        case '`': { toggle = true; } break; //fire
-      }
-    }
-
-    if (spec_buffer[i]) {
-      switch (i) {
-        case GLUT_KEY_RIGHT: theta += dr; break; // Look angle right
-        case GLUT_KEY_LEFT:  theta -= dr; break; // Look angle left
-        case GLUT_KEY_DOWN:  phi += dr;   break; // Look angle down
-        case GLUT_KEY_UP:    phi -= dr;   break; // Look angle up
-      }
-    }
-
-  }
-
-  float gx = 50.0;
-  float gy = 10;
-  float gz = 50.0;
-
-  float kx = 50.0;
-  float ky = 10;
-  float kz = -50.0;
-
-  float vx = -50.0;
-  float vy = 10;
-  float vz = -50.0;
-
-  float cx = -50.0;
-  float cy = 10;
-  float cz = 50.0;
 
   // float x
   // float y
@@ -618,114 +601,9 @@ void animation(void) {
   // float rta
   // float rl
 
+  update_everything();
 
-  for (int i = 0; i < NUM_GUNS; i++) {
-    // for (int j = 0; j < PARTS_GUN; j++) {
-      guns[i][0].update(gx + -0.25*0.2 * cos((display_rot - 0) * M_PI/180), gy + 0.0*0.2, gz + -0.25*0.2 /* - 0.0 */ * sin((display_rot - 0) * M_PI/180), BARREL_W*0.2, BARREL_H*0.2, BARREL_D*0.2, BARREL_R, BARREL_G, BARREL_B, 0, 90 - display_rot, 0);
-      guns[i][1].update(gx + -1.25*0.2 * cos((display_rot - 0) * M_PI/180), gy + -0.25*0.2, gz + -1.25*0.2 * sin((display_rot - 0) * M_PI/180), SIGHT_W*0.2, SIGHT_H*0.2, SIGHT_D*0.2, SIGHT_R, SIGHT_G, SIGHT_B, 0, 90 - display_rot, 90);
-      guns[i][2].update(gx + 0.025*0.2 * cos((display_rot - 0) * M_PI/180), gy + -1.0*0.2, gz + 0.025*0.2 * sin((display_rot - 0) * M_PI/180), HANDLE_W*0.2, HANDLE_H*0.2, HANDLE_D*0.2, HANDLE_R, HANDLE_G, HANDLE_B, 0, 180 - display_rot, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_KEYS; i++) {
-    // for (int j = 0; j < PARTS_KEY; j++) {
-      keys[i][0].update(kx + 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz + 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_W*0.2, KEYL_H*0.2, KEYL_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
-      keys[i][1].update(kx - 0.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz - 0.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_H*0.2, KEYL_D*0.2, KEYL_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
-      keys[i][2].update(kx - 2.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 0.0*0.2, kz - 2.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYL_H*0.2, KEYL_D*0.2, KEYL_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
-      keys[i][3].update(kx - 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky + 1.5*0.2, kz - 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
-      keys[i][4].update(kx - 1.5*0.2 * cos((display_rot - 0) * M_PI/180), ky - 1.5*0.2, kz - 1.5*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_W*0.2, KEYS_H*0.2, KEYS_D*0.2, KEY_R, KEY_G, KEY_B, 0, 90 - display_rot, 0);
-      keys[i][5].update(kx + 2.0*0.2 * cos((display_rot - 0) * M_PI/180), ky - 1.0*0.2, kz + 2.0*0.2 * sin((display_rot - 0) * M_PI/180), KEYS_H*0.2, KEYS_D*0.2, KEYS_W*0.2, KEY_R, KEY_G, KEY_B, 0, 0 - display_rot, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_VACCUUMS; i++) {
-    // for (int j = 0; j < PARTS_VACCUUM; j++) {
-      vaccuums[i][0].update(vx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), vy - 3.0*0.2, vz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), BODYL_W*0.2, BODYL_H*0.2, BODYL_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0 - display_rot, 0);
-      vaccuums[i][1].update(vx - 0.5*0.2 * cos((display_rot - 0) * M_PI/180), vy + 0.5*0.2, vz - 0.5*0.2 * sin((display_rot - 0) * M_PI/180), BODYS_W*0.2, BODYS_H*0.2, BODYS_D*0.2, VACCUUM_R, VACCUUM_G, VACCUUM_B, 0, 0 - display_rot, 0);
-      vaccuums[i][2].update(vx + 2.75*0.2 * cos((display_rot - 65) * M_PI/180), vy + 0.5*0.2, vz + 2.75*0.2 * sin((display_rot - 65) * M_PI/180), HOSEL_W*0.203, HOSEL_H*0.2, HOSEL_D*0.203, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
-      vaccuums[i][3].update(vx + 1.0*0.2 * cos((display_rot - 0) * M_PI/180), vy + 2.5*0.2, vz + 1.0*0.2 * sin((display_rot - 0) * M_PI/180), HOSEM_W*0.201, HOSEM_H*0.2, HOSEM_D*0.201, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
-      vaccuums[i][4].update(vx + 1.75*0.2 * cos((display_rot - 50) * M_PI/180), vy + 3.5*0.2, vz + 1.75*0.2 * sin((display_rot - 50) * M_PI/180), HOSES_W*0.202, HOSES_D*0.2, HOSES_H*0.202, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
-      vaccuums[i][5].update(vx + 2.75*0.2 * cos((display_rot - 65) * M_PI/180), vy - 2.5*0.2, vz + 2.75*0.2 * sin((display_rot - 65) * M_PI/180), NOZZLE_D*0.2, NOZZLE_H*0.2, NOZZLE_W*0.2, HOSE_R, HOSE_G, HOSE_B, 0, 0 - display_rot, 0);
-      vaccuums[i][6].update(vx - 2.25*0.2 * cos((display_rot - 25) * M_PI/180), vy - 1.5*0.2, vz - 2.25*0.2 * sin((display_rot - 25) * M_PI/180), STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0 - display_rot, 0);
-      vaccuums[i][7].update(vx - 2.25*0.2 * cos((display_rot + 25) * M_PI/180), vy - 1.5*0.2, vz - 2.25*0.2 * sin((display_rot + 25) * M_PI/180), STRAP_W*0.2, STRAP_H*0.2, STRAP_D*0.2, STRAP_R, STRAP_G, STRAP_B, 0, 0 - display_rot, 0);
-      vaccuums[i][8].update(vx + 2.5*0.2 * cos((display_rot - 90) * M_PI/180), vy - 3.5*0.2, vz + 2.5*0.2 * sin((display_rot - 90) * M_PI/180), WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, -90 - display_rot, 0);
-      vaccuums[i][9].update(vx + 2.5*0.2 * cos((display_rot + 90) * M_PI/180), vy - 3.5*0.2, vz + 2.5*0.2 * sin((display_rot + 90) * M_PI/180), WHEEL_W*0.2, WHEEL_H*0.2, WHEEL_D*0.2, WHEEL_R, WHEEL_G, WHEEL_B, 0, 90 - display_rot, 0);
-      vaccuums[i][10].update(vx + 1.5*0.2 * cos((display_rot - 0) * M_PI/180), vy + 0.5*0.2, vz + 1.5*0.2 * sin((display_rot - 0) * M_PI/180), LIGHT_W*0.2, LIGHT_H*0.2, LIGHT_D*0.2, LIGHT_R, LIGHT_G, LIGHT_B, 0, 0 - display_rot, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_COFFEES; i++) {
-    // for (int j = 0; j < PARTS_COFFEE; j++) {
-      coffees[i][0].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 0.8*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), COFFEE_W*0.2, COFFEE_H*0.2, COFFEE_D*0.2, COFFEE_R, COFFEE_G, COFFEE_B, 0, 0 - display_rot, 0);
-      coffees[i][1].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.0*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), CUP_W*0.2, CUP_H*0.2, CUP_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0 - display_rot, 0);
-      coffees[i][2].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.5*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 45 - display_rot, 0);
-      coffees[i][3].update(cx + 0.0*0.2 * cos((display_rot - 0) * M_PI/180), cy - 1.5*0.2, cz + 0.0*0.2 * sin((display_rot - 0) * M_PI/180), SAUCER_W*0.2, SAUCER_H*0.2, SAUCER_D*0.2, DISH_R, DISH_G, DISH_B, 0, 0 - display_rot, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_GHOSTS; i++) {
-    // for (int j = 0; j < PARTS_GHOST; j++) {
-      ghosts[i][0].update(ghosts_loc[0].x, ghost_height[0] + 0.5, ghosts_loc[0].z, ghosts_size[0].x, ghosts_size[0].y, ghosts_size[0].z, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0);
-      ghosts[i][1].update(ghosts_loc[0].x, ghost_height[1] + 0.0, ghosts_loc[0].z, ghosts_size[0].x*1.25, ghosts_size[0].y*1.25, ghosts_size[0].z*1.25, GHOST_R, GHOST_G, GHOST_B, 0, 0, 0);
-      ghosts[i][2].update(ghosts_loc[0].x + 0.5 * cos(105 * M_PI/180), ghost_height[2] - 1.0, ghosts_loc[0].z + 0.5 * sin(105 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
-      ghosts[i][3].update(ghosts_loc[0].x + 0.5 * cos(225 * M_PI/180), ghost_height[3] - 1.0, ghosts_loc[0].z + 0.5 * sin(225 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
-      ghosts[i][3].update(ghosts_loc[0].x + 0.5 * cos(345 * M_PI/180), ghost_height[4] - 1.0, ghosts_loc[0].z + 0.5 * sin(345 * M_PI/180), ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2, GHOST_R, GHOST_G, GHOST_B, 45, 0, 45);
-    // }
-  }
-
-  for (int i = 0; i < NUM_ZOMBIES; i++) {
-    // for (int j = 0; j < PARTS_ZOMBIE; j++) {
-    zombies[i][0].update(zombies_loc[i].x + 0.0, agency_loc.y + 1.15, zombies_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][1].update(zombies_loc[i].x + 0.0, agency_loc.y + 0.75, zombies_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][2].update(zombies_loc[i].x + 0.3, agency_loc.y + 0.75, zombies_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][3].update(zombies_loc[i].x + 0.3, agency_loc.y + 0.75, zombies_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][4].update(zombies_loc[i].x + 0.4, agency_loc.y + 0.875, zombies_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][5].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][6].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][7].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.25, zombies_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][8].update(zombies_loc[i].x + 0.25, agency_loc.y - 0.125, zombies_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][9].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.375, zombies_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][10].update(zombies_loc[i].x + 0.0, agency_loc.y - 0.375, zombies_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][11].update(zombies_loc[i].x + 0.0, agency_loc.y - 1.5, zombies_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    zombies[i][12].update(zombies_loc[i].x + 0.0, agency_loc.y - 1.5, zombies_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], ZOMBIE_R, ZOMBIE_G, ZOMBIE_B, 0, 0, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_WEREWOLFS; i++) {
-    // for (int j = 0; j < PARTS_WEREWOLF; j++) {
-    werewolfs[i][0].update(werewolves_loc[i].x + 0.0, agency_loc.y + 1.15, werewolves_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][1].update(werewolves_loc[i].x + 0.0, agency_loc.y + 0.75, werewolves_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][2].update(werewolves_loc[i].x + 0.3, agency_loc.y + 0.75, werewolves_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][3].update(werewolves_loc[i].x + 0.3, agency_loc.y + 0.75, werewolves_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][4].update(werewolves_loc[i].x + 0.4, agency_loc.y + 0.875, werewolves_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][5].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][6].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][7].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.25, werewolves_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][8].update(werewolves_loc[i].x + 0.25, agency_loc.y - 0.125, werewolves_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][9].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.375, werewolves_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][10].update(werewolves_loc[i].x + 0.0, agency_loc.y - 0.375, werewolves_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][11].update(werewolves_loc[i].x + 0.0, agency_loc.y - 1.5, werewolves_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    werewolfs[i][12].update(werewolves_loc[i].x + 0.0, agency_loc.y - 1.5, werewolves_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], WEREWOLF_R, WEREWOLF_G, WEREWOLF_B, 0, 0, 0);
-    // }
-  }
-
-  for (int i = 0; i < NUM_AGENCIES; i++) {
-    // for (int j = 0; j < PARTS_AGENCIE; j++) {
-    agencies[i][0].update(agencies_loc[i].x + 0.0, agency_loc.y + 1.15, agencies_loc[i].z + 0.0, HAIR_W*zombie_mult[i], HAIR_H*zombie_mult[i], HAIR_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][1].update(agencies_loc[i].x + 0.0, agency_loc.y + 0.75, agencies_loc[i].z + 0.0, FACE_W*zombie_mult[i], FACE_H*zombie_mult[i], FACE_D*zombie_mult[i], SKIN_R, SKIN_G, SKIN_B, 0, 0, 0);
-    agencies[i][2].update(agencies_loc[i].x + 0.3, agency_loc.y + 0.75, agencies_loc[i].z - 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][3].update(agencies_loc[i].x + 0.3, agency_loc.y + 0.75, agencies_loc[i].z + 0.175, LENS_W*zombie_mult[i], LENS_H*zombie_mult[i], LENS_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][4].update(agencies_loc[i].x + 0.4, agency_loc.y + 0.875, agencies_loc[i].z + 0.0, BRIDGE_W*zombie_mult[i], BRIDGE_H*zombie_mult[i], BRIDGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][5].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z + 0.0, SHIRT_W*zombie_mult[i], SHIRT_H*zombie_mult[i], SHIRT_D*zombie_mult[i], SHIRT_R, SHIRT_G, SHIRT_B, 0, 0, 0);
-    agencies[i][6].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z - 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][7].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.25, agencies_loc[i].z + 0.375, SUIT_W*zombie_mult[i], SUIT_H*zombie_mult[i], SUIT_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][8].update(agencies_loc[i].x + 0.25, agency_loc.y - 0.125, agencies_loc[i].z + 0.0, TIE_W*zombie_mult[i], TIE_H*zombie_mult[i], TIE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][9].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.375, agencies_loc[i].z - 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][10].update(agencies_loc[i].x + 0.0, agency_loc.y - 0.375, agencies_loc[i].z + 0.5, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][11].update(agencies_loc[i].x + 0.0, agency_loc.y - 1.5, agencies_loc[i].z - 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    agencies[i][12].update(agencies_loc[i].x + 0.0, agency_loc.y - 1.5, agencies_loc[i].z + 0.25, APPENDAGE_W*zombie_mult[i], APPENDAGE_H*zombie_mult[i], APPENDAGE_D*zombie_mult[i], AGENCY_R, AGENCY_G, AGENCY_B, 0, 0, 0);
-    // }
-  }
+  if (!fall) { mv_vel.y = 0.0; }
 
   if (jump) {
     mv_vel.y += 0.75;
@@ -733,16 +611,13 @@ void animation(void) {
     fall = true;
   }
 
-  if (!fall) {
-    mv_vel.y = 0.0;
-  }
-
   mv_vel.y -= 0.015;
+
+  if (mv_pos.y < -300.0) { exit(EXIT_SUCCESS); }
 
   for (int i = 0; i < NUM_FLOORS; i++) {
     for (int j = 0; j < PARTS_FLOOR; j++) {
       collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, vec3(floors[i][j].x, floors[i][j].y, floors[i][j].z), vec3(floors[i][j].w, floors[i][j].h, floors[i][j].d), collide[i]);
-      // collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, platform_loc[i], platform_size[i], collide[i]);
     }
   }
 
@@ -754,7 +629,20 @@ void animation(void) {
       collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, ghosts_loc[0], ghosts_size[0], g_die[0]);
     }
     for (int i = 0; i < NUM_ZOMBIES; i++) {
-      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, zombies_loc[i], zombies_size[i], z_die[i]);
+      collision(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, zombies_loc[i], zombies_size[i], p_die);
+    }
+    for (int i = 0; i < NUM_BULLETS; i++) {
+      if (active[i]) {
+        for (int j = 0; j < NUM_ZOMBIES; j++) {
+          proximity(bullet[i].x - bullet_dist[i] * cos((bullet_ang[i]) * M_PI/180), bullet[i].y - 0.0, bullet[i].z - bullet_dist[i] * sin((bullet_ang[i]) * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, zombies_loc[j], zombies_size[j], z_die[j]);
+        }
+        for (int j = 0; j < NUM_WEREWOLFS; j++) {
+          proximity(bullet[i].x - bullet_dist[i] * cos((bullet_ang[i]) * M_PI/180), bullet[i].y - 0.0, bullet[i].z - bullet_dist[i] * sin((bullet_ang[i]) * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, werewolves_loc[j], werewolves_size[j], w_die[j]);
+        }
+        for (int j = 0; j < NUM_AGENCIES; j++) {
+          proximity(bullet[i].x - bullet_dist[i] * cos((bullet_ang[i]) * M_PI/180), bullet[i].y - 0.0, bullet[i].z - bullet_dist[i] * sin((bullet_ang[i]) * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, agencies_loc[j], agencies_size[j], a_die[j]);
+        }
+      }
     }
   }
 
@@ -763,6 +651,7 @@ void animation(void) {
   //     collision(zombies_loc[i].x, mv_pos.y, zombies_loc[i].z, PLAYER_W * 2, PLAYER_H * 2, PLAYER_D * 2, wall_loc[j], wall_size[j], collide[j]);
   //   }
   // }
+
   // for (int i = 0; i < NUM_ZOMBIES; i++) {
   //   for (int j = 0; j < NUM_OBJECTS; j++) {
   //     collision(zombies_loc[i].x, mv_pos.y, zombies_loc[i].z, PLAYER_W * 2, PLAYER_H * 2, PLAYER_D * 2, wall_loc[j], wall_size[j], collide[j]);
@@ -772,34 +661,44 @@ void animation(void) {
   // object(pv, model_view, mv_pos.x - 5.0 * cos((theta - 0) * M_PI/180), mv_pos.y - 0.25, mv_pos.z - 5.0 * sin((theta - 0) * M_PI/180), 3.0, 3.0, 10.0, BARREL_R, BARREL_G, BARREL_B, 0, -theta + 90, 0, 0, 0, 0);
 
 
-  for (int i = 0; i < NUM_DOORS; i++) {
-    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, door_loc[i], door_size[i], doors[i]);
+  // for (int i = 0; i < NUM_DOORS; i++) {
+  //   proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, door_loc[i], door_size[i], doors[i]);
+  // }
+
+  // for (int i = 0; i < NUM_INTERACTABLES; i++) {
+  //   proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, inter_loc[i], inter_size[i], proximal[i]);
+  // }
+
+  for (int i = 0; i < NUM_GUNS; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, gun_loc[i], pickup_size[0], pickup[0]);
   }
-  for (int i = 0; i < NUM_INTERACTABLES; i++) {
-    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, inter_loc[i], inter_size[i], proximal[i]);
+
+  for (int i = 0; i < NUM_VACCUUMS; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, vacuum_loc[i], pickup_size[1], pickup[1]);
   }
-  for (int i = 0; i < NUM_PICKUPS; i++) {
-    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, pickup_loc[i], pickup_size[i], pickup[i]);
+
+  for (int i = 0; i < NUM_KEYS; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, key_loc[i], pickup_size[2], pickup[2]);
+  }
+
+  for (int i = 0; i < NUM_COFFEES; i++) {
+    proximity(mv_pos.x, mv_pos.y, mv_pos.z, PLAYER_W, PLAYER_H, PLAYER_D, coffee_loc[i], pickup_size[3], pickup[3]);
   }
 
   // collision(&enemy_loc[0].x, mv_pos.y, &enemy_loc[0].z, GHOST_W, GHOST_H, GHOST_D, wall_loc, wall_size, collide, NUM_OBJECTS);
 
-  if (!collider[1]) {
-  // if (mv_pos.y > 0.0) {
-  } else {
-    // mv_pos.y = 0.0;
-    fall = false;
-  }
+  if (!collider[1]) { fall = true; } else { fall = false; }
 
-  for (int i = 0; i < 6; i++) {
-    collider[i] = false;
-  }
+  for (int i = 0; i < 6; i++) { collider[i] = false; }
 
   mv_pos.x += mv_vel.x;
   mv_pos.y += mv_vel.y;
   mv_pos.z += mv_vel.z;
 
   lasttime = time;
+
+  // ENVIRONMENT
+  disp_rot = display_rot;
 
   glutPostRedisplay();
 

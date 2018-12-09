@@ -19,7 +19,14 @@ class Object {
 
     ~Object() {}
 
-    void create (mat4 matr, GLuint unif, GLfloat xp, GLfloat yp, GLfloat zp, GLfloat ws, GLfloat hs, GLfloat ds, GLfloat rc, GLfloat gc, GLfloat bc, int pi, float ya, int ro, int sli, int sta, int typ, material mater) {
+    void create (mat4 matr, GLuint unif,
+      GLfloat xp, GLfloat yp, GLfloat zp,
+      GLfloat ws, GLfloat hs, GLfloat ds,
+      GLfloat rc, GLfloat gc, GLfloat bc,
+      int pi, float ya, int ro,
+      int sli, int sta,
+      int typ,
+      material mater) {
       matrix = matr; uniform = unif;
       x = xp; y = yp; z = zp;
       w = ws; h = hs; d = ds;
@@ -54,7 +61,12 @@ class Object {
       }
     }
 
-    void render (/*MatrixStack stack,*/ bool hurt, bool hallucinate, color4 ap[], color4 dp[], color4 sp[], color4 light_ambient[], color4 light_diffuse[], color4 light_specular[], GLuint ambient_product, GLuint diffuse_product, GLuint specular_product, GLuint ambient_product2, GLuint diffuse_product2, GLuint specular_product2, GLuint enable, float color_a_pink, color4 emissive[], GLuint Material_Emiss, GLuint shiny) {
+    void render (/*MatrixStack stack,*/ bool hurt, bool hallucinate,
+      color4 ap[], color4 dp[], color4 sp[],
+      color4 light_ambient[], color4 light_diffuse[], color4 light_specular[],
+      GLuint ambient_product, GLuint diffuse_product, GLuint specular_product,
+      GLuint ambient_product2, GLuint diffuse_product2, GLuint specular_product2,
+      GLuint enable, float color_a_pink, color4 emissive[], GLuint Material_Emiss, GLuint shiny) {
 
       // stack.push(matrix);
 
@@ -165,11 +177,11 @@ class Object {
 
     }
 
-    void update (GLfloat xp, GLfloat yp, GLfloat zp, GLfloat ws, GLfloat hs, GLfloat ds, GLfloat rc, GLfloat gc, GLfloat bc, float pi, float ya, float ro) {
-      x = xp; y = yp; z = zp;
-      w = ws; h = hs; d = ds;
-      r = rc; g = gc; b = bc;
-      pitch = pi; yaw = ya; roll = ro;
+    void update (vec3 location, vec3 size, vec3 color, vec3 rotation) {
+      x = location.x;     y = location.y;   z = location.z;
+      w = size.x;         h = size.y;       d = size.z;
+      r = color.x;        g = color.y;      b = color.z;
+      pitch = rotation.x; yaw = rotation.y; roll = rotation.z;
     }
 
     // void torso() {
@@ -428,6 +440,8 @@ class Object {
     float roll;
     int sl;
     int st;
+    GLfloat weight;
+    float health;
     int type;
 
 };
