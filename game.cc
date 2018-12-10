@@ -58,6 +58,16 @@ void display(void) {
   else { render_[VACCUUMS] = false; }
   if (!get_coffee) { render_[COFFEES] = true; }
   else { render_[COFFEES] = false; }
+
+  if (!get_bullet) { render_[BULLETS] = true; }
+  else { render_[BULLETS] = false; }
+  if (!get_rocket) { render_[ROCKETS] = true; }
+  else { render_[ROCKETS] = false; }
+  if (!get_health) { render_[HEALTHS] = true; }
+  else { render_[HEALTHS] = false; }
+  if (!get_shield) { render_[SHIELDS] = true; }
+  else { render_[SHIELDS] = false; }
+
   if (perspective) { render_[PLAYERS] = true; }
   else { render_[PLAYERS] = false; }
 
@@ -66,7 +76,7 @@ void display(void) {
   render_[WEREWOLFS] = true;
   render_[AGENCIES] = true;
 
-  for (int i = 0; i < NUM_BULLETS; i++) {
+  for (int i = 0; i < NUM_BULLET; i++) {
     if (active[i]) {
       bullet_dist[i] += bullet_speed;
       object(mv, model_view, bullet[i].x - bullet_dist[i] * cos((bullet_ang[i]) * M_PI/180), bullet[i].y - 0.0, bullet[i].z - bullet_dist[i] * sin((bullet_ang[i]) * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, bullet_color.x, bullet_color.y, bullet_color.z, 0, -bullet_ang[i], 0, 0, 0, 0); // translate down half of the object
@@ -78,7 +88,7 @@ void display(void) {
     }
   }
 
-  render_models(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+  render_models(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
 
   // HUD
 
@@ -107,10 +117,27 @@ void display(void) {
     object(mv, model_view, hp_x - 0.00075 * sc_x + 0.0666 * i, hp_y - 0.085 * sc_y, 0.0, 0.01 * sc_x, 0.03 * sc_y, 0.0, 0.0, 1.0, 1.0, 0, 0, 270, 0, 0, 4);
   }
 
-  for (int i = 0; i < clip; i++) {
-    object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, -135, 0, 0, 3);
-    object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 180, 0, 0, 4);
-    object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 4);
+  if (get_gun) {
+    if (clip_size == 25) {
+      for (int i = 0; i < magazine; i++) {
+        object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, BULLET_R, BULLET_G, BULLET_B, 0, 0, -135, 0, 0, 3);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 4);
+      }
+    } else if (clip_size == 3) {
+      for (int i = 0; i < magazine; i++) {
+        object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, -135, 0, 0, 3);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 0, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i - 0.011, am_y, 0.0, 0.05 * sc_y, 0.03 * sc_x, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 90, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i + 0.009, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 0, 0, 0, 4);
+      }
+    } else if (clip_size == 100) {
+      for (int i = 0; i < magazine; i++) {
+        object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R, LASER_G, LASER_B, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R, LASER_G, LASER_B, 0, 0, 0, 0, 0, 4);
+      }
+    }
   }
 
   glFlush();

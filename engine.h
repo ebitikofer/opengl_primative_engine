@@ -24,13 +24,13 @@
 #define RATE_CAMERA_V	2
 
 #define NUM_OBJECTS	44
-#define NUM_BULLETS 100
+#define NUM_BULLET 100
 #define NUM_DOORS	11
 #define NUM_BOOKCASE	10
 #define NUM_ENEMIES	4
 #define NUM_TABLES	4
 #define NUM_INTERACTABLES	4
-#define NUM_PICKUPS	4
+#define NUM_PICKUPS	8
 #define NUM_ROOMS 10
 
 #define NUM_PARTS 10
@@ -59,7 +59,7 @@ mat4 p, mv, cv, pv;   // shader variables
 vec4 cc;
 
 // Globals to control moving around a scene.
-vec3 mv_pos = vec3(0.0, 5.0, 0.0); // vec3(-37.5, 5.0, 30.0); // vec3(-50.0, 0.0, 45.0);
+vec3 mv_pos = vec3(0.0, 20.0, 0.0); // vec3(-37.5, 5.0, 30.0); // vec3(-50.0, 0.0, 45.0);
 vec3 mv_vel = vec3(0.0, 0.0, 0.0);
 
 // Projection transformation parameters
@@ -99,7 +99,7 @@ bool w_die[NUM_WEREWOLFS] = { false };
 
 bool a_die[NUM_AGENCIES] = { false };
 
-bool p_die = false;
+bool p_die[NUM_ENEMIES] = { false };
 
 GLfloat l = 0.0;
 GLfloat r = 0.0;
@@ -122,7 +122,8 @@ std::string title_bar;
 
 bool display_bool = false;
 
-bool death = false, hurt = false, hallucinate = false;
+bool death = false, hallucinate = false;
+bool heal = false, hurt = false, strengthen = false, weaken = false, resupply = false, energize = false;
 
 GLuint Lights[2];
 color4 light_ambients[2] = { vec4(1.0, 1.0, 1.0, 1.0) };
@@ -187,14 +188,54 @@ void lighting () {
 
 void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, GLfloat r, GLfloat g, GLfloat b, int pitch, int yaw, int roll, int sl, int st, int type) {
 
-  if (hurt) {
+  if (heal) {
     aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
     dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
     sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
-    aps[1] = light_ambients[1] * vec4(1.0, 0.0, 0.0, 1.0);
-    dps[1] = light_diffuses[1] * vec4(1.0, 0.0, 0.0, 1.0);
-    sps[1] = light_speculars[1] * vec4(1.0, 0.0, 0.0, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.0, 0.5, 0.0, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.0, 0.5, 0.0, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.0, 0.5, 0.0, 1.0);
+    heal = false;
+  } else if (hurt) {
+    aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
+    dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
+    sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.25, 0.0, 0.0, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.25, 0.0, 0.0, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.25, 0.0, 0.0, 1.0);
     hurt = false;
+  } else if (strengthen) {
+    aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
+    dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
+    sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.0, 0.5, 0.5, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.0, 0.5, 0.5, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.0, 0.5, 0.5, 1.0);
+    strengthen = false;
+  } else if (weaken) {
+    aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
+    dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
+    sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.25, 0.25, 0.25, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.25, 0.25, 0.25, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.25, 0.25, 0.25, 1.0);
+    weaken = false;
+  } else if (resupply) {
+    aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
+    dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
+    sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.25, 0.25, 0.0, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.25, 0.25, 0.0, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.25, 0.25, 0.0, 1.0);
+    resupply = false;
+  } else if (energize) {
+    aps[0] = light_ambients[0] * vec4(r, g, b, 1.0);
+    dps[0] = light_diffuses[0] * vec4(r, g, b, 1.0);
+    sps[0] = light_speculars[0] * vec4(r, g, b, 1.0);
+    aps[1] = light_ambients[1] * vec4(0.25, 0.0, 0.25, 1.0);
+    dps[1] = light_diffuses[1] * vec4(0.25, 0.0, 0.25, 1.0);
+    sps[1] = light_speculars[1] * vec4(0.25, 0.0, 0.25, 1.0);
+    energize = false;
   } else if (hallucinate) {
     color_a_pink += 0.001;
     red = sin(color_a_pink*M_PI/180/2);
@@ -416,15 +457,13 @@ void collision (GLfloat &x, GLfloat &y, GLfloat &z, GLfloat w, GLfloat h, GLfloa
   }
 }
 
-void proximity (GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result) {
-  float m = 0.0;
-  if (x - w / 2 < (loc.x + (size.x + m) / 2) && x + w / 2 > (loc.x - (size.x - m) / 2) &&
-      y - h / 2 < (loc.y + (size.y + m) / 2) && y + h / 2 > (loc.y - (size.y - m) / 2) &&
-      z - d / 2 < (loc.z + (size.z + m) / 2) && z + d / 2 > (loc.z - (size.z - m) / 2) ) {
+void proximity (GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result, float mult) {
+  if (x - w / 2 < (loc.x + (size.x + mult) / 2) && x + w / 2 > (loc.x - (size.x + mult) / 2) &&
+      y - h / 2 < (loc.y + (size.y + mult) / 2) && y + h / 2 > (loc.y - (size.y + mult) / 2) &&
+      z - d / 2 < (loc.z + (size.z + mult) / 2) && z + d / 2 > (loc.z - (size.z + mult) / 2) ) {
     result = true;
   } else {
-
-    // result = false;
+    result = false;
   }
 }
 

@@ -61,7 +61,7 @@ class Object {
       }
     }
 
-    void render (/*MatrixStack stack,*/ bool hurt, bool hallucinate,
+    void render (/*MatrixStack stack,*/ bool heal, bool hurt, bool strengthen, bool weaken, bool resupply, bool energize, bool hallucinate,
       color4 ap[], color4 dp[], color4 sp[],
       color4 light_ambient[], color4 light_diffuse[], color4 light_specular[],
       GLuint ambient_product, GLuint diffuse_product, GLuint specular_product,
@@ -70,14 +70,54 @@ class Object {
 
       // stack.push(matrix);
 
-      if (hurt) {
-        ap[0] = light_ambient[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_ambient;
-        dp[0] = light_diffuse[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_diffuse;
-        sp[0] = light_specular[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_specular;
-        ap[1] = light_ambient[1] * vec4(1.0 * 1.0, 0.0 * 1.0, 0.0 * 1.0, 1.0) * material_ambient;
-        dp[1] = light_diffuse[1] * vec4(1.0 * 1.0, 0.0 * 1.0, 0.0 * 1.0, 1.0) * material_diffuse;
-        sp[1] = light_specular[1] * vec4(1.0 * 1.0, 0.0 * 1.0, 0.0 * 1.0, 1.0) * material_specular;
+      if (heal) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.0, 0.5, 0.0, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.0, 0.5, 0.0, 1.0);
+        sp[1] = light_specular[1] * vec4(0.0, 0.5, 0.0, 1.0);
+        heal = false;
+      } else if (hurt) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.25, 0.0, 0.0, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.25, 0.0, 0.0, 1.0);
+        sp[1] = light_specular[1] * vec4(0.25, 0.0, 0.0, 1.0);
         hurt = false;
+      } else if (strengthen) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.0, 0.5, 0.5, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.0, 0.5, 0.5, 1.0);
+        sp[1] = light_specular[1] * vec4(0.0, 0.5, 0.5, 1.0);
+        strengthen = false;
+      } else if (weaken) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.25, 0.25, 0.25, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.25, 0.25, 0.25, 1.0);
+        sp[1] = light_specular[1] * vec4(0.25, 0.25, 0.25, 1.0);
+        weaken = false;
+      } else if (resupply) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.25, 0.25, 0.0, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.25, 0.25, 0.0, 1.0);
+        sp[1] = light_specular[1] * vec4(0.25, 0.25, 0.0, 1.0);
+        resupply = false;
+      } else if (energize) {
+        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
+        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
+        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[1] = light_ambient[1] * vec4(0.25, 0.0, 0.25, 1.0);
+        dp[1] = light_diffuse[1] * vec4(0.25, 0.0, 0.25, 1.0);
+        sp[1] = light_specular[1] * vec4(0.25, 0.0, 0.25, 1.0);
+        energize = false;
       } else if (hallucinate) {
         color_a_pink += 0.001;
         float red = sin(color_a_pink*M_PI/180/2);
