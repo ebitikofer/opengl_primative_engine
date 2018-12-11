@@ -189,8 +189,8 @@ class Object {
         glUniform4fv(Material_Emiss, 1, emissive[0]);
 
         mat4 instance = (
-          RotateX(rotation.x) * RotateY(rotation.y) * RotateZ(rotation.z) *
           Translate( position.x, position.y, position.z )
+          * RotateX(rotation.x) * RotateY(rotation.y) * RotateZ(rotation.z)
         );
 
         // mat4 instance = (Translate( 0.0, 0.5 * PART_HEIGHT, 0.0 ) * Scale( PART_WIDTH, PART_HEIGHT, PART_WIDTH ) );
