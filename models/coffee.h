@@ -54,4 +54,13 @@ vec3 coffee_parts_colors[PARTS_COFFEE] = {
   vec3(DISH_R, DISH_G, DISH_B)
 };
 
+vec3 coffee_parts_rot[PARTS_COFFEE] = {
+  vec3(0.0, -45.0, 0.0),
+  vec3(0.0, 0, 0.0),
+  vec3(0.0, -45.0, 0.0),
+  vec3(0.0, 0, 0.0),
+  vec3(0.0, -45.0, 0.0),
+  vec3(0.0, 0, 0.0)
+};
+
 #endif

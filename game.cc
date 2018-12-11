@@ -25,11 +25,11 @@ void display(void) {
 
   glutSetWindowTitle(title_bar.c_str());
 
-  point4  eye(mv_pos.x + radius * cos(theta * M_PI/180) * cos(phi * M_PI/180),
-              mv_pos.y + radius * sin(phi * M_PI/180),
-              mv_pos.z + radius * sin(theta * M_PI/180) * cos(phi * M_PI/180),
+  point4  eye(players[0][0].position.x + radius * cos(theta * M_PI/180) * cos(phi * M_PI/180),
+              players[0][0].position.y + radius * sin(phi * M_PI/180),
+              players[0][0].position.z + radius * sin(theta * M_PI/180) * cos(phi * M_PI/180),
               1.0);
-  point4  at(mv_pos.x, mv_pos.y, mv_pos.z, 1.0);
+  point4  at(players[0][0].position.x, players[0][0].position.y, players[0][0].position.z, 1.0);
   vec4    up(0.0, 1.0, 0.0, 0.0);
 
   glClearColor(sky.x, sky.y, sky.z, 0.0);
@@ -52,10 +52,13 @@ void display(void) {
 
   if (!get_gun) { render_[GUNS] = true; }
   else { render_[GUNS] = false; } // if (!get_gun) gun_pickup(); else ; // gun();
-  if (!get_key) { render_[KEYS] = true; }
-  else { render_[KEYS] = false; }
+  if (!get_launcher) { render_[LAUNCHERS] = true; }
+  else { render_[LAUNCHERS] = false; }
+  if (!get_laser) { render_[LASERS] = true; }
+  else { render_[LASERS] = false; }
   if (!get_vaccuum) { render_[VACCUUMS] = true; }
   else { render_[VACCUUMS] = false; }
+
   if (!get_coffee) { render_[COFFEES] = true; }
   else { render_[COFFEES] = false; }
 
@@ -68,6 +71,9 @@ void display(void) {
   if (!get_shield) { render_[SHIELDS] = true; }
   else { render_[SHIELDS] = false; }
 
+  if (!get_key) { render_[KEYS] = true; }
+  else { render_[KEYS] = false; }
+
   if (perspective) { render_[PLAYERS] = true; }
   else { render_[PLAYERS] = false; }
 
@@ -79,7 +85,7 @@ void display(void) {
   for (int i = 0; i < NUM_BULLET; i++) {
     if (active[i]) {
       bullet_dist[i] += bullet_speed;
-      object(mv, model_view, bullet[i].x - bullet_dist[i] * cos((bullet_ang[i]) * M_PI/180), bullet[i].y - 0.0, bullet[i].z - bullet_dist[i] * sin((bullet_ang[i]) * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, bullet_color.x, bullet_color.y, bullet_color.z, 0, -bullet_ang[i], 0, 0, 0, 0); // translate down half of the object
+      object(mv, model_view, bullet[i].x - bullet_dist[i] * cos(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet[i].y - bullet_dist[i] * sin(bullet_phi[i] * M_PI/180), bullet[i].z - bullet_dist[i] * sin(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, bullet_color.x, bullet_color.y, bullet_color.z, bullet_phi[i], -bullet_theta[i], bullet_phi[i], 0, 0, 0);
       std::cout << bullet_dist[i] << std::endl;
       if (bullet_dist[i] >= DRAW_DISTANCE) {
         std::cout << "deactivate" << std::endl;
@@ -99,10 +105,19 @@ void display(void) {
 
   // render_hud(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
 
+  float rp_x = 0.0;
+  float rp_y = 0.0;
   float hp_x = -0.95;
   float hp_y = 0.95;
+  float sp_x = -0.95;
+  float sp_y = 0.95;
   float am_x = 0.95;
   float am_y = -0.95;
+
+  object(mv, model_view, rp_x, rp_y, 0.0, 0.01 * sc_x, 0.2 * sc_y, 0.0, 0.01, 0.125, 0.125, 0, 0, 0, 0, 0, 4);
+  object(mv, model_view, rp_x, rp_y, 0.0, 0.01 * sc_x, 0.05 * sc_y, 0.0, 0.01, 0.125, 0.125, 0, 0, 45, 0, 0, 4);
+  object(mv, model_view, rp_x, rp_y, 0.0, 0.01 * sc_x, 0.1 * sc_y, 0.0, 0.01, 0.125, 0.125, 0, 0, 90, 0, 0, 4);
+  object(mv, model_view, rp_x, rp_y, 0.0, 0.01 * sc_x, 0.05 * sc_y, 0.0, 0.01, 0.125, 0.125, 0, 0, 135, 0, 0, 4);
 
   for (int i = 0; i < health; i++) {
     object(mv, model_view, hp_x - 0.015 * sc_x + 0.1 * i, hp_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, 0.25, 0.0, 0.0, 0, 0, -135, 0, 0, 4);

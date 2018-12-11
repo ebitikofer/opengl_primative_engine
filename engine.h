@@ -30,7 +30,7 @@
 #define NUM_ENEMIES	4
 #define NUM_TABLES	4
 #define NUM_INTERACTABLES	4
-#define NUM_PICKUPS	8
+#define NUM_PICKUPS	10
 #define NUM_ROOMS 10
 
 #define NUM_PARTS 10
@@ -57,10 +57,6 @@ GLuint specular_product2;
 
 mat4 p, mv, cv, pv;   // shader variables
 vec4 cc;
-
-// Globals to control moving around a scene.
-vec3 mv_pos = vec3(0.0, 20.0, 0.0); // vec3(-37.5, 5.0, 30.0); // vec3(-50.0, 0.0, 45.0);
-vec3 mv_vel = vec3(0.0, 0.0, 0.0);
 
 // Projection transformation parameters
 GLfloat fovy = 70.0;  // Field-of-view in Y direction angle (in degrees)
@@ -101,17 +97,12 @@ bool a_die[NUM_AGENCIES] = { false };
 
 bool p_die[NUM_ENEMIES] = { false };
 
-GLfloat l = 0.0;
-GLfloat r = 0.0;
-GLfloat u = 0.0;
-GLfloat d = 0.0;
-GLfloat f = 0.0;
-GLfloat b = 0.0;
-
-bool collider[6] = { false };
-
-bool jump = false,
-     fall = true;
+GLfloat left = 0.0;
+GLfloat right = 0.0;
+GLfloat up = 0.0;
+GLfloat down = 0.0;
+GLfloat forward = 0.0;
+GLfloat backward = 0.0;
 
 float red = 0.0, green = 0.5, blue = 1.0, color_a_pink = 0.0;
 
@@ -297,174 +288,40 @@ void object(mat4 matrix, GLuint uniform, GLfloat x, GLfloat y, GLfloat z, GLfloa
 
 }
 
-void collision (GLfloat &x, GLfloat &y, GLfloat &z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result) {
-  //
-  // //loop through all the normals
-  // foreach normal in allNormals
-  // {
-  // 	//projection might be a for loop over one model’s vertices simply getting max and min value of dot(vertex, normal)
-  // 	intervalA = projection(objectA, normal);
-  // 	intervalB = projection(objectB, normal);
-  //
-  // 	//from this point on take first object as moving and the second one as static
-  // 	//calculate the velocity of moving object
-  // 	finalVelocity = velocityA-velocityB;
-  //
-  // 	//in order to prevent tunneling we need to expand the intervals by the model velocities - optimization
-  // 	//if the velocity is > 0 then we expand it to the right and vice versa
-  // 	if (finalVelocity > 0.0f)
-  // 	    velocityIntervalA.end += intervalA.end + finalVelocity;
-  // 	else
-  // 	    velocityIntervalA.start += intervalB.start + finalVelocity;
-  //
-  // 	//if the velocity expanded intervals overlap, test the times
-  // 	if (velocityIntervalA.start <= intervalB.end && intervalB.start <= velocityIntervalA.end)
-  // 	{
-  // 	    //we need the time intervals of overlap and find out if they overlap with each other :D
-  // 	    //we have multiple time intervals, let's take the latest entry time and the earliest leave time, if maxEntry collision
-  //
-  // 	    //it's calculated for one frame and since the velocity says how much the object moves in one frame, max time is 1 min is 0
-  // 	    entry = 0.0f;
-  // 	    leave = 1.0f;
-  // 	    amount = 0.0;
-  //
-  // 	    if (intervalA.end <= intervalB.start)
-  // 	    {
-  // 		//interval A is going away from interval B, no possible collision
-  // 		if (finalVelocity <= 0.0f)
-  // 		    return res;
-  // 		//calculate the time of entering and leaving the other interval, t=s/v
-  // 		entry = absVal((intervalB.start - intervalA.end)/finalVelocity);
-  // 		leave = absVal((intervalB.end - intervalA.start)/finalVelocity);
-  // 	    }
-  // 	    //interval B is on the left
-  // 	    else if (intervalB.end <= intervalA.start)
-  // 	    {
-  // 		if (finalVelocity >=0.0f)
-  // 		    return res;
-  // 		entry = absVal((intervalA.start - intervalB.end)/finalVelocity);
-  // 		leave = absVal((intervalA.end - intervalB.start)/finalVelocity);
-  // 	    }
-  // 	    //intervals already overlap
-  // 	    else
-  // 	    {
-  // 		//deciding how do the overlap
-  // 		if (intervalA.start <= intervalB.start)
-  // 		{
-  // 		    leave = absVal((intervalB.end - intervalA.start)/finalVelocity);
-  // 		    amount = intervalA.end - intervalB.start;
-  // 		}
-  // 		else
-  // 		{
-  // 		    leave = absVal((intervalA.end - intervalB.start)/finalVelocity);
-  // 		    amount = intervalB.end - intervalA.start;
-  // 		}
-  // 	    }
-  //
-  // 	    //here we can leave if the collision happens in the future frames (time is higher than max time of the frame = 1)
-  // 	    if (entry > 1.0f)
-  // 		return;
-  //
-  //
-  // 	    //save max and min of overlap borders
-  // 	    if (maxEntry < entry)
-  // 	    {
-  // 		maxEntry = entry;
-  // 		minAmout = amount;
-  // 		collisionNormal = normal;
-  // 	    }
-  //       	    //this is the case of overlap, we can use the amount to push the objects out of each other
-  // 	    else if (amount < minAmount)
-  // 	    {
-  // 		minAmount = amount;
-  // 		overlapNormal = normal;
-  // 	    }
-  // 	    if (minLeave >= leave)
-  // 		minLeave = leave;
-  //
-  // 	}
-  // 	//if they don't overlap then we have found the separating axis (current normal) and we can say there is no collision
-  // 	else
-  // 	    return;
-  // 	}
-  //
-  // 	//if there is a time interval that lies inside all the found ones, collision happened
-  // 	if (minLeave>=maxEntry)
-  // 	    foundInterval = true;
+void collision(vec3 &position, vec3 size, vec3 &velocity, vec3 loc, vec3 bound, bool &result, float margin, bool is_collision, bool &collider) {
 
-  /////physics
+  if (position.x - size.x / 2 < loc.x + (bound.x + margin) / 2 && position.x + size.x / 2 > loc.x - (bound.x + margin) / 2 &&
+      position.y - size.y / 2 < loc.y + (bound.y + margin) / 2 && position.y + size.y / 2 > loc.y - (bound.y + margin) / 2 &&
+      position.z - size.z / 2 < loc.z + (bound.z + margin) / 2 && position.z + size.z / 2 > loc.z - (bound.z + margin) / 2 ) {
 
-
-//
-// //to keep the track of in-frame time <0.0; 1.0>
-// left = 1.0;
-// elapsed = 1.0;
-// end = false;
-//
-// //gravity etc.
-// applyEnviromentals();
-//
-// while(!end)
-// {
-// 	findCollisions();
-// 	//the physics will set elapsed something greater than 1.0 if the collision happens in the next frame
-// 	//physics module also changes the velocity vectors of the objects according to the collision responses
-// 	elapsed = solvePhysics(left);
-//
-// 	if (elapsed > 1.0)
-// 		break;
-//
-// 	//move the objects (according to their velocities, some might be modified by the physics solving)
-// 	moveObjects(elapsed);
-// 	//octree update
-// 	rebuildTree();
-// 	left -= elapsed;
-// }
-// //move the objects to the end of the frame
-// moveObjects(left);
-// rebuildTree();
-
-
-
-  // var length:Number = box2.x - box1.x;
-  // var phw = ;
-  // var ohw = ;
-  //
-  // var gap_between_boxes:Number = length - half_width_box1 - half_width_box2;
-  // if(gap_between_boxes > 0) trace("It's a big gap between boxes")
-  // else if(gap_between_boxes == 0) trace("Boxes are touching each other")
-  // else if(gap_between_boxes < 0) trace("Boxes are penetrating each other")
-
-  if (x - w/2 < loc.x + size.x/2 && x + w/2 > loc.x - size.x/2 &&
-      y - h/2 < loc.y + size.y/2 && y + h/2 > loc.y - size.y/2 &&
-      z - d/2 < loc.z + size.z/2 && z + d/2 > loc.z - size.z/2 ) {
     result = true;
-    collider[1] = true;
-    l = (loc.x + size.x / 2) - (x - w / 2);
-    r = (x + w / 2) - (loc.x - size.x / 2);
-    u = (loc.y + size.y / 2) - (y - h / 2);
-    d = (y + h / 2) - (loc.y - size.y / 2);
-    f = (loc.z + size.z / 2) - (z - d / 2);
-    b = (z + d / 2) - (loc.z - size.z / 2);
-         if (l < f && l < b && l < u && l < d && l < r) { x += l; mv_vel.x = 0.0; }
-    else if (r < f && r < b && r < u && r < d && r < l) { x -= r; mv_vel.x = 0.0; }
-    else if (u < f && u < b && u < l && u < r && u < d) { y += u; mv_vel.y = 0.0; }
-    else if (d < f && d < b && d < l && d < r && d < u) { y -= d; mv_vel.y = 0.0; }
-    else if (f < u && f < d && f < l && f < r && f < b) { z += f; mv_vel.z = 0.0; }
-    else if (b < u && b < d && b < l && b < r && b < f) { z -= b; mv_vel.z = 0.0; }
-  } else {
-    result = false;
-  }
-}
 
-void proximity (GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h, GLfloat d, vec3 loc, vec3 size, bool &result, float mult) {
-  if (x - w / 2 < (loc.x + (size.x + mult) / 2) && x + w / 2 > (loc.x - (size.x + mult) / 2) &&
-      y - h / 2 < (loc.y + (size.y + mult) / 2) && y + h / 2 > (loc.y - (size.y + mult) / 2) &&
-      z - d / 2 < (loc.z + (size.z + mult) / 2) && z + d / 2 > (loc.z - (size.z + mult) / 2) ) {
-    result = true;
+    if(is_collision) {
+
+      collider = true;
+
+      left =      (loc.x      + bound.x / 2) - (position.x -  size.x / 2);
+      right =     (position.x +  size.x / 2) - (loc.x      - bound.x / 2);
+      up =        (loc.y      + bound.y / 2) - (position.y -  size.y / 2);
+      down =      (position.y +  size.y / 2) - (loc.y      - bound.y / 2);
+      forward =   (loc.z      + bound.z / 2) - (position.z -  size.z / 2);
+      backward =  (position.z +  size.z / 2) - (loc.z      - bound.z / 2);
+
+           if (left <  forward && left <  backward && left <       up && left <      down && left <       right) { position.x += left; velocity.x = 0.0; }
+      else if (right < forward && right < backward && right <      up && right <     down && right <       left) { position.x -= right; velocity.x = 0.0; }
+      else if (up <    forward && up <    backward && up <       left && up <       right && up <          down) { position.y += up; velocity.y = 0.0; }
+      else if (down <  forward && down <  backward && down <     left && down <     right && down <          up) { position.y -= down; velocity.y = 0.0; }
+      else if (forward <    up && forward <   down && forward <  left && forward <  right && forward < backward) { position.z += forward; velocity.z = 0.0; }
+      else if (backward <   up && backward <  down && backward < left && backward < right && backward < forward) { position.z -= backward; velocity.z = 0.0; }
+
+    }
+
   } else {
+
     result = false;
+
   }
+
 }
 
 // myReshape function, reshapes the window when resized

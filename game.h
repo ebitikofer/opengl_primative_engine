@@ -27,10 +27,18 @@ void render_models(/*MatrixStack stack,*/bool heal, bool hurt, bool strengthen, 
     }
   }
 
-  if (render_[KEYS]) {
-    for (int i = 0; i < NUM_KEYS; i++) {
-      for (int j = 0; j < PARTS_KEY; j++) {
-        keys[i][j].render(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+  if (render_[LAUNCHERS]) {
+    for (int i = 0; i < NUM_LAUNCHERS; i++) {
+      for (int j = 0; j < PARTS_LAUNCHER; j++) {
+        launchers[i][j].render(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[LASERS]) {
+    for (int i = 0; i < NUM_LASERS; i++) {
+      for (int j = 0; j < PARTS_LASER; j++) {
+        lasers[i][j].render(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
       }
     }
   }
@@ -79,6 +87,14 @@ void render_models(/*MatrixStack stack,*/bool heal, bool hurt, bool strengthen, 
     for (int i = 0; i < NUM_SHIELDS; i++) {
       for (int j = 0; j < PARTS_SHIELD; j++) {
         shields[i][j].render(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
+      }
+    }
+  }
+
+  if (render_[KEYS]) {
+    for (int i = 0; i < NUM_KEYS; i++) {
+      for (int j = 0; j < PARTS_KEY; j++) {
+        keys[i][j].render(/*mvstack*/ heal, hurt, strengthen, weaken, resupply, energize, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
       }
     }
   }

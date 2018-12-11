@@ -19,20 +19,24 @@ class Object {
 
     ~Object() {}
 
-    void create (mat4 matr, GLuint unif,
-      GLfloat xp, GLfloat yp, GLfloat zp,
-      GLfloat ws, GLfloat hs, GLfloat ds,
-      GLfloat rc, GLfloat gc, GLfloat bc,
-      int pi, float ya, int ro,
-      int sli, int sta,
-      int typ,
-      material mater) {
+    void create (mat4 matr, GLuint unif, vec3 movement, vec3 growth, vec3 interpolation, vec3 heading, int sli, int sta, int typ, material mater) {
+
+      left = 0.0; right = 0.0;
+      up = 0.0; down = 0.0;
+      forward = 0.0; backward = 0.0;
+
+      fall = true; collide = false;
+
       matrix = matr; uniform = unif;
-      x = xp; y = yp; z = zp;
-      w = ws; h = hs; d = ds;
-      r = rc; g = gc; b = bc;
-      pitch = pi; yaw = ya; roll = ro;
-      sl = sli; st = sta; type = typ;
+
+      position = movement;
+      size = growth;
+      color = interpolation;
+      rotation = heading;
+
+      sl = sli; st = sta;
+      type = typ;
+
       switch (mater) {
         case 0:
           material_ambient = vec4(1.0, 1.0, 1.0, 1.0);
@@ -71,49 +75,49 @@ class Object {
       // stack.push(matrix);
 
       if (heal) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.0, 0.5, 0.0, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.0, 0.5, 0.0, 1.0);
         sp[1] = light_specular[1] * vec4(0.0, 0.5, 0.0, 1.0);
         heal = false;
       } else if (hurt) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.25, 0.0, 0.0, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.25, 0.0, 0.0, 1.0);
         sp[1] = light_specular[1] * vec4(0.25, 0.0, 0.0, 1.0);
         hurt = false;
       } else if (strengthen) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.0, 0.5, 0.5, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.0, 0.5, 0.5, 1.0);
         sp[1] = light_specular[1] * vec4(0.0, 0.5, 0.5, 1.0);
         strengthen = false;
       } else if (weaken) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.25, 0.25, 0.25, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.25, 0.25, 0.25, 1.0);
         sp[1] = light_specular[1] * vec4(0.25, 0.25, 0.25, 1.0);
         weaken = false;
       } else if (resupply) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.25, 0.25, 0.0, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.25, 0.25, 0.0, 1.0);
         sp[1] = light_specular[1] * vec4(0.25, 0.25, 0.0, 1.0);
         resupply = false;
       } else if (energize) {
-        ap[0] = light_ambient[0] * vec4(r, g, b, 1.0);
-        dp[0] = light_diffuse[0] * vec4(r, g, b, 1.0);
-        sp[0] = light_specular[0] * vec4(r, g, b, 1.0);
+        ap[0] = light_ambient[0] * vec4(color.x, color.y, color.z, 1.0);
+        dp[0] = light_diffuse[0] * vec4(color.x, color.y, color.z, 1.0);
+        sp[0] = light_specular[0] * vec4(color.x, color.y, color.z, 1.0);
         ap[1] = light_ambient[1] * vec4(0.25, 0.0, 0.25, 1.0);
         dp[1] = light_diffuse[1] * vec4(0.25, 0.0, 0.25, 1.0);
         sp[1] = light_specular[1] * vec4(0.25, 0.0, 0.25, 1.0);
@@ -130,12 +134,12 @@ class Object {
         dp[1] = light_diffuse[1] * vec4(-blue * 0.5, -red * 0.6, -green * 0.4, 1.0) * material_diffuse;
         sp[1] = light_specular[1] * vec4(-green * 0.6, -blue * 0.4, -red * 0.5, 1.0) * material_specular;
       } else {
-        ap[0] = light_ambient[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_ambient;
-        dp[0] = light_diffuse[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_diffuse;
-        sp[0] = light_specular[0] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_specular;
-        ap[1] = light_ambient[1] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_ambient;
-        dp[1] = light_diffuse[1] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_diffuse;
-        sp[1] = light_specular[1] * vec4(r * 1.0, g * 1.0, b * 1.0, 1.0) * material_specular;
+        ap[0] = light_ambient[0] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_ambient;
+        dp[0] = light_diffuse[0] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_diffuse;
+        sp[0] = light_specular[0] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_specular;
+        ap[1] = light_ambient[1] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_ambient;
+        dp[1] = light_diffuse[1] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_diffuse;
+        sp[1] = light_specular[1] * vec4(color.x * 1.0, color.y * 1.0, color.z * 1.0, 1.0) * material_specular;
       }
 
     //   if (hurt) {
@@ -185,15 +189,15 @@ class Object {
         glUniform4fv(Material_Emiss, 1, emissive[0]);
 
         mat4 instance = (
-          Translate( x, y, z )
-          * RotateX(pitch) * RotateY(yaw) * RotateZ(roll)
+          RotateX(rotation.x) * RotateY(rotation.y) * RotateZ(rotation.z) *
+          Translate( position.x, position.y, position.z )
         );
 
         // mat4 instance = (Translate( 0.0, 0.5 * PART_HEIGHT, 0.0 ) * Scale( PART_WIDTH, PART_HEIGHT, PART_WIDTH ) );
 
         switch (type) {
           case 0:
-            glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
+            glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
             glUniform1f( enable, 0.0 );
             glDrawArrays( GL_TRIANGLES, 0, NumVertices ); break;
           // case 1:
@@ -202,12 +206,12 @@ class Object {
           //   gluCylinder(qobj, w, d, h, sl, st); break;
           case 2:
             glUniform4fv(Material_Emiss, 1, emissive[1]);
-              glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
+              glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
               glUniform1f( enable, 1.0 );
               glDrawArrays( GL_TRIANGLES, NumVertices, NumVertices2 );
             glUniform4fv(Material_Emiss, 1, emissive[0]); break;
           case 4:
-            glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( w, h, d ) );
+            glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
             glUniform1f( enable, 0.0 );
             glDrawArrays( GL_TRIANGLES, 0, NumVertices / 6 ); break;
 
@@ -217,242 +221,88 @@ class Object {
 
     }
 
-    void update (vec3 location, vec3 size, vec3 color, vec3 rotation) {
-      x = location.x;     y = location.y;   z = location.z;
-      w = size.x;         h = size.y;       d = size.z;
-      r = color.x;        g = color.y;      b = color.z;
-      pitch = rotation.x; yaw = rotation.y; roll = rotation.z;
+    void update (vec3 movement, vec3 scaling, vec3 interpolation, vec3 heading) {
+
+      position = movement;
+      size = scaling;
+      color = interpolation;
+      rotation = heading;
+
     }
 
-    // void torso() {
-    //   // Is the next call necessary?
-    //   mvstack.push( model_view );
-    //
-    //   mat4 instance = ( Translate( 0.0, 0.5 * TORSO_HEIGHT, 0.0 ) *
-    // 		    Scale( TORSO_WIDTH, TORSO_HEIGHT, TORSO_WIDTH ) );
-    //
-    //   glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //   glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //   // Is the next call necessary?
-    //   model_view = mvstack.pop();
-    // }
-    //
-    // void head() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * HEAD_HEIGHT, 0.0 ) *
-    // 		     Scale( HEAD_WIDTH, HEAD_HEIGHT, HEAD_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void left_upper_arm() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * UPPER_ARM_HEIGHT, 0.0 ) *
-    // 		     Scale( UPPER_ARM_WIDTH,
-    // 			    UPPER_ARM_HEIGHT,
-    // 			    UPPER_ARM_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void left_lower_arm() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = ( Translate( 0.0, 0.5 * LOWER_ARM_HEIGHT, 0.0 ) *
-    // 		      Scale( LOWER_ARM_WIDTH,
-    // 			     LOWER_ARM_HEIGHT,
-    // 			     LOWER_ARM_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void right_upper_arm() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * UPPER_ARM_HEIGHT, 0.0 ) *
-    // 		     Scale( UPPER_ARM_WIDTH,
-    // 			    UPPER_ARM_HEIGHT,
-    // 			    UPPER_ARM_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void right_lower_arm() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * LOWER_ARM_HEIGHT, 0.0 ) *
-    // 		     Scale( LOWER_ARM_WIDTH,
-    // 			    LOWER_ARM_HEIGHT,
-    // 			    LOWER_ARM_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void left_upper_leg() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = ( Translate( 0.0, 0.5 * UPPER_LEG_HEIGHT, 0.0 ) *
-    // 		      Scale( UPPER_LEG_WIDTH,
-    // 			     UPPER_LEG_HEIGHT,
-    // 			     UPPER_LEG_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void left_lower_leg() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * LOWER_LEG_HEIGHT, 0.0 ) *
-    // 		     Scale( LOWER_LEG_WIDTH,
-    // 			    LOWER_LEG_HEIGHT,
-    // 			    LOWER_LEG_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void right_upper_leg() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = (Translate( 0.0, 0.5 * UPPER_LEG_HEIGHT, 0.0 ) *
-    // 		     Scale( UPPER_LEG_WIDTH,
-    // 			    UPPER_LEG_HEIGHT,
-    // 			    UPPER_LEG_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
-    //
-    // void right_lower_leg() {
-    //     mvstack.push( model_view );
-    //
-    //     mat4 instance = ( Translate( 0.0, 0.5 * LOWER_LEG_HEIGHT, 0.0 ) *
-    // 		      Scale( LOWER_LEG_WIDTH,
-    // 			     LOWER_LEG_HEIGHT,
-    // 			     LOWER_LEG_WIDTH ) );
-    //
-    //     glUniformMatrix4fv( ModelView, 1, GL_TRUE, model_view * instance );
-    //     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
-    //
-    //     model_view = mvstack.pop();
-    // }
+    void collision (vec3 loc, vec3 bound, bool &result, float margin, bool is_collision) {
 
+      if (position.x - size.x / 2 < loc.x + (bound.x + margin) / 2 && position.x + size.x / 2 > loc.x - (bound.x + margin) / 2 &&
+          position.y - size.y / 2 < loc.y + (bound.y + margin) / 2 && position.y + size.y / 2 > loc.y - (bound.y + margin) / 2 &&
+          position.z - size.z / 2 < loc.z + (bound.z + margin) / 2 && position.z + size.z / 2 > loc.z - (bound.z + margin) / 2 ) {
 
-    // void update() { // Given the theta matrix, generate new transforms for all the joints.
-    // void fixup_transforms() {
-    //   switch( angle ) {
-    //   case Torso:
-    //     nodes[Torso].transform =
-    //       RotateY( theta[Torso] );
-    //     break;
-    //
-    //   case Head1: case Head2:
-    //     nodes[Head].transform =
-    //       Translate(0.0, TORSO_HEIGHT+0.5*HEAD_HEIGHT, 0.0) *
-    //       RotateX(theta[Head1]) *
-    //       RotateY(theta[Head2]) *
-    //       Translate(0.0, -0.5*HEAD_HEIGHT, 0.0);
-    //     break;
-    //
-    //   case LeftUpperArm:
-    //     nodes[LeftUpperArm].transform =
-    //       Translate(-(TORSO_WIDTH+UPPER_ARM_WIDTH),
-    // 		0.9*TORSO_HEIGHT, 0.0) *
-    //       RotateX(theta[LeftUpperArm]);
-    //     break;
-    //
-    //   case RightUpperArm:
-    //     nodes[RightUpperArm].transform =
-    //       Translate(TORSO_WIDTH+UPPER_ARM_WIDTH, 0.9*TORSO_HEIGHT, 0.0) *
-    //       RotateX(theta[RightUpperArm]);
-    //     break;
-    //
-    //   case RightUpperLeg:
-    //     nodes[RightUpperLeg].transform =
-    //       Translate(TORSO_WIDTH+UPPER_LEG_WIDTH,
-    // 		0.1*UPPER_LEG_HEIGHT, 0.0) *
-    //       RotateX(theta[RightUpperLeg]);
-    //     break;
-    //
-    //   case LeftUpperLeg:
-    //     nodes[LeftUpperLeg].transform =
-    //       Translate(-(TORSO_WIDTH+UPPER_LEG_WIDTH),
-    // 		0.1*UPPER_LEG_HEIGHT, 0.0) *
-    //       RotateX(theta[LeftUpperLeg]);
-    //     break;
-    //
-    //   case LeftLowerArm:
-    //     nodes[LeftLowerArm].transform =
-    //       Translate(0.0, UPPER_ARM_HEIGHT, 0.0) *
-    //       RotateX(theta[LeftLowerArm]);
-    //     break;
-    //
-    //   case LeftLowerLeg:
-    //     nodes[LeftLowerLeg].transform =
-    //       Translate(0.0, UPPER_LEG_HEIGHT, 0.0) *
-    //       RotateX(theta[LeftLowerLeg]);
-    //     break;
-    //
-    //   case RightLowerLeg:
-    //     nodes[RightLowerLeg].transform =
-    //       Translate(0.0, UPPER_LEG_HEIGHT, 0.0) *
-    //       RotateX(theta[RightLowerLeg]);
-    //     break;
-    //
-    //   case RightLowerArm:
-    //     nodes[RightLowerArm].transform =
-    //       Translate(0.0, UPPER_ARM_HEIGHT, 0.0) *
-    //       RotateX(theta[RightLowerArm]);
-    //     break;
-    //   }
-    // }
-    //
-    // // Speed of rotations (adjust for different machines)
-    // // Note: should modify to be consistent by using glutelapsedtime().
-    // GLfloat incr = 5.0;
-    // void idle(){
-    //
-    //   if(moving) {
-    //     if (forwards) {
-    //       theta[angle] += incr;
-    //     } else {
-    //       theta[angle] -= incr;
-    //     }
-    //     if( theta[angle] > 360.0 ) theta[angle] -= 360.0;
-    //     if( theta[angle] < 0.0 ) theta[angle] += 360.0;
-    //     fixup_transforms();
-    //     glutPostRedisplay();
-    //   }
-    //
-    // }
-    // }
+        result = true;
+
+        if(is_collision) {
+
+          collide = true;
+
+          left     = (loc.x      + bound.x / 2) - (position.x - size.x  / 2);
+          right    = (position.x + size.x  / 2) - (loc.x      - bound.x / 2);
+          up       = (loc.y      + bound.y / 2) - (position.y - size.y  / 2);
+          down     = (position.y + size.y  / 2) - (loc.y      - bound.y / 2);
+          forward  = (loc.z      + bound.z / 2) - (position.z - size.z  / 2);
+          backward = (position.z + size.z  / 2) - (loc.z      - bound.z / 2);
+
+               if (left     < forward && left     < backward && left     <   up && left     < down  && left     <    right) { position.x += left;     velocity.x = 0.0; }
+          else if (right    < forward && right    < backward && right    <   up && right    < down  && right    <     left) { position.x -= right;    velocity.x = 0.0; }
+          else if (up       < forward && up       < backward && up       < left && up       < right && up       <     down) { position.y += up;       velocity.y = 0.0; }
+          else if (down     < forward && down     < backward && down     < left && down     < right && down     <       up) { position.y -= down;     velocity.y = 0.0; }
+          else if (forward  <      up && forward  < down     && forward  < left && forward  < right && forward  < backward) { position.z += forward;  velocity.z = 0.0; }
+          else if (backward <      up && backward < down     && backward < left && backward < right && backward <  forward) { position.z -= backward; velocity.z = 0.0; }
+
+        }
+
+      } else {
+
+        result = false;
+
+      }
+
+    }
+
+    void loop_reset() {
+
+      velocity.x = 0.0;
+      velocity.z = 0.0;
+
+    }
 
     // void delete();
+
+    void gravity_update() {
+
+      if (!fall) { velocity.y = 0.0; }
+
+      if (jump) {
+        velocity.y += 0.75;
+        jump = false;
+        fall = true;
+      }
+
+      velocity.y -= 0.015;
+
+    }
+
+    void position_update() {
+
+      if (!collide) { fall = true; } else { fall = false; }
+
+      collide = false;
+
+      position.x += velocity.x;
+      position.y += velocity.y;
+      position.z += velocity.z;
+
+      velocity.x = 0.0;
+      velocity.z = 0.0;
+
+    }
 
     std::string name;
     mat4  transform;
@@ -466,23 +316,30 @@ class Object {
     color4 material_specular;
     float  material_shininess;
     GLuint uniform;
-    GLfloat x;
-    GLfloat y;
-    GLfloat z;
-    GLfloat w;
-    GLfloat h;
-    GLfloat d;
-    GLfloat r;
-    GLfloat g;
-    GLfloat b;
-    float pitch;
-    float yaw;
-    float roll;
+    vec3 position;
+    vec3 velocity;
+    vec3 accelaration;
+    vec3 size;
+    vec3 color;
+    vec3 rotation;
     int sl;
     int st;
     GLfloat weight;
     float health;
     int type;
+    bool rigidbody;
+    bool collide;
+
+    bool fall;
+    bool jump;
+
+    GLfloat left;
+    GLfloat right;
+    GLfloat up;
+    GLfloat down;
+    GLfloat forward;
+    GLfloat backward;
+
 
 };
 

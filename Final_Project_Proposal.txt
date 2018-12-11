@@ -1,3 +1,25 @@
+1st stage summary:
+  rpg and laser models
+  accelaration and impulses
+    explosions
+
+2nd stage summary:
+TIME BASED SHIT!!!!!!
+  laser charging and reloading
+  pickups reload
+enemy health instead of one shot
+  gun base damage and and advantage and disadvantage values
+fire mode switching
+score hud representation
+enemy physics
+puzzles based on proximity to the player
+
+3rd stage summary:
+  added lighting - easy
+  sounds - medium
+  textures - hard
+  other ambiance creating effects
+
 player
   perspective
     1st person
