@@ -266,6 +266,26 @@ class Object {
 
     }
 
+    void chase_(vec3 chased, float speed) {
+
+      float x_len = 0, y_len = 0;
+
+      if (position.x != chased.x) {
+        if (position.x - chased.x < 0) { position.x += speed; }
+        if (position.x - chased.x > 0) { position.x -= speed; }
+      }
+      if (position.z != chased.z) {
+        if (position.z - chased.z < 0) { position.z += speed; }
+        if (position.z - chased.z > 0) { position.z -= speed; }
+      }
+
+      x_len = position.x - chased.x;
+      y_len = position.z - chased.z;
+
+      rotation.y = -( atan( x_len / (y_len + 0.01) ) * 180 / M_PI ) + 90;
+
+    }
+
     void loop_reset() {
 
       velocity.x = 0.0;
@@ -302,6 +322,10 @@ class Object {
       velocity.x = 0.0;
       velocity.z = 0.0;
 
+    }
+
+    void check_fall_death () {
+      if (position.y < -300.0) { position = vec3(0.0, 40.0, 0.0); }
     }
 
     std::string name;

@@ -72,8 +72,6 @@ bool debug = false,
      sweep_ghost = false,
      robot_collision = false;
 
-bool jump = false, fall = true;
-
 bool rooms[NUM_ROOMS] = { false };
 bool displayed[NUM_ROOMS] = { false };
 vec4 bounds[NUM_ROOMS] = {
@@ -169,30 +167,10 @@ void check_keys() {
 
 }
 
-void chase(vec3 &chaser, vec3 chasee, float &chaser_theta, float speed) {
-
-  float x_len = 0, y_len = 0;
-
-  if (chaser.x != chasee.x) {
-    if (chaser.x - chasee.x < 0) { chaser.x += speed; }
-    if (chaser.x - chasee.x > 0) { chaser.x -= speed; }
-  }
-  if (chaser.z != chasee.z) {
-    if (chaser.z - chasee.z < 0) { chaser.z += speed; }
-    if (chaser.z - chasee.z > 0) { chaser.z -= speed; }
-  }
-
-  x_len = chaser.x - chasee.x;
-  y_len = chaser.z - chasee.z;
-
-  chaser_theta = -(atan(x_len/(y_len + 0.01)) * 180 / M_PI) + 90;
-
-}
-
-void move_and_face(Object &actor, vec3 loc, vec3 size, vec3 growth, vec3 color, vec3 center_loc, vec3 rot) {
+void move_and_face(Object &actor, vec3 size, vec3 growth, vec3 color, vec3 center_loc, vec3 rot) {
 
   actor.update(
-    vec3(loc.x + center_loc.z * cos((rot.y + center_loc.x) * M_PI/180), loc.y + center_loc.y, loc.z + center_loc.z * sin((rot.y + center_loc.x) * M_PI/180)),
+    vec3(actor.position.x + center_loc.z * cos((rot.y + center_loc.x) * M_PI/180), actor.position.y + center_loc.y, actor.position.z + center_loc.z * sin((rot.y + center_loc.x) * M_PI/180)),
     vec3(size.x * growth.x, size.y * growth.y, size.z * growth.z),
     vec3(color.x, color.y, color.z),
     vec3(rot.x, -rot.y, rot.z)
@@ -250,7 +228,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_GUNS; i++) {
     for (int j = 0; j < PARTS_GUN; j++) {
-      move_and_face(guns[i][j], gun_loc[i], gun_parts_size[j],
+      move_and_face(guns[i][j], gun_parts_size[j],
         vec3(gun_mult[i], gun_mult[i], gun_mult[i]), gun_parts_colors[j],
         gun_parts_diff[j], vec3(0, display_rot, 0)
       );
@@ -259,7 +237,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_LAUNCHERS; i++) {
     for (int j = 0; j < PARTS_LAUNCHER; j++) {
-      move_and_face(launchers[i][j], launcher_loc[i], launcher_parts_size[j],
+      move_and_face(launchers[i][j], launcher_parts_size[j],
         vec3(launcher_mult[i], launcher_mult[i], launcher_mult[i]), launcher_parts_colors[j],
         launcher_parts_diff[j], vec3(0, display_rot, 0)
       );
@@ -268,7 +246,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_LASERS; i++) {
     for (int j = 0; j < PARTS_LASER; j++) {
-      move_and_face(lasers[i][j], laser_loc[i], laser_parts_size[j],
+      move_and_face(lasers[i][j], laser_parts_size[j],
         vec3(laser_mult[i], laser_mult[i], laser_mult[i]), laser_parts_colors[j],
         laser_parts_diff[j], vec3(0, display_rot, 0)
       );
@@ -277,7 +255,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_VACCUUMS; i++) {
     for (int j = 0; j < PARTS_VACCUUM; j++) {
-      move_and_face(vaccuums[i][j], vacuum_loc[i], vacuum_parts_size[j],
+      move_and_face(vaccuums[i][j], vacuum_parts_size[j],
         vec3(vacuum_mult[i], vacuum_mult[i], vacuum_mult[i]), vacuum_parts_colors[j],
         vacuum_parts_diff[j], vec3(0, display_rot, 0)
       );
@@ -286,7 +264,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_COFFEES; i++) {
     for (int j = 0; j < PARTS_COFFEE; j++) {
-      move_and_face(coffees[i][j], coffee_loc[i], coffee_parts_size[j],
+      move_and_face(coffees[i][j], coffee_parts_size[j],
         vec3(coffee_mult[i], coffee_mult[i], coffee_mult[i]), coffee_parts_colors[j],
         coffee_parts_diff[j], coffee_parts_rot[j]
       );
@@ -295,7 +273,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_BULLETS; i++) {
     for (int j = 0; j < PARTS_BULLET; j++) {
-      move_and_face(bullets[i][j], bullet_loc[i], bullet_parts_size[j],
+      move_and_face(bullets[i][j], bullet_parts_size[j],
         vec3(bullet_mult[i], bullet_mult[i], bullet_mult[i]), bullet_parts_colors[j],
         bullet_parts_diff[j], vec3(0, display_rot, 45)
       );
@@ -304,7 +282,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_ROCKETS; i++) {
     for (int j = 0; j < PARTS_ROCKET; j++) {
-      move_and_face(rockets[i][j], rocket_loc[i], rocket_parts_size[j],
+      move_and_face(rockets[i][j], rocket_parts_size[j],
         vec3(rocket_mult[i], rocket_mult[i], rocket_mult[i]), rocket_parts_colors[j],
         rocket_parts_diff[j], vec3(0, display_rot, 45)
       );
@@ -313,7 +291,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_HEALTHS; i++) {
     for (int j = 0; j < PARTS_HEALTH; j++) {
-      move_and_face(vaccuums[i][j], health_loc[i], health_parts_size[j],
+      move_and_face(vaccuums[i][j], health_parts_size[j],
         vec3(health_mult[i], health_mult[i], health_mult[i]), health_parts_colors[j],
         health_parts_diff[j], vec3(display_rot, display_rot, display_rot)
       );
@@ -322,7 +300,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_SHIELDS; i++) {
     for (int j = 0; j < PARTS_SHIELD; j++) {
-      move_and_face(shields[i][j], shield_loc[i], shield_parts_size[j],
+      move_and_face(shields[i][j], shield_parts_size[j],
         vec3(shield_mult[i], shield_mult[i], shield_mult[i]), shield_parts_colors[j],
         shield_parts_diff[j], vec3(display_rot, display_rot, display_rot)
       );
@@ -331,7 +309,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_KEYS; i++) {
     for (int j = 0; j < PARTS_KEY; j++) {
-      move_and_face(keys[i][j], key_loc[i], key_parts_size[j],
+      move_and_face(keys[i][j], key_parts_size[j],
         vec3(key_mult[i], key_mult[i], key_mult[i]), key_parts_colors[j],
         key_parts_diff[j], vec3(0, display_rot, 0)
       );
@@ -340,7 +318,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_GHOSTS; i++) {
     for (int j = 0; j < PARTS_GHOST; j++) {
-      move_and_face(ghosts[i][j], ghosts_loc[i], ghost_parts_size[j],
+      move_and_face(ghosts[i][j], ghost_parts_size[j],
         vec3(ghost_mult[i], ghost_mult[i], ghost_mult[i]), ghost_parts_colors[j],
         ghost_parts_diff[j], vec3(ghost_parts_rot[j].x, ghost_theta[i], ghost_parts_rot[j].z)
       );
@@ -349,7 +327,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_ZOMBIES; i++) {
     for (int j = 0; j < PARTS_ZOMBIE; j++) {
-      move_and_face(zombies[i][j], zombies_loc[i], zomb_parts_size[j],
+      move_and_face(zombies[i][j], zomb_parts_size[j],
         vec3(zombie_mult[i], zombie_mult[i], zombie_mult[i]), zomb_parts_colors[j],
         zomb_parts_diff[j], vec3(0, zombie_theta[i], 0)
       );
@@ -358,7 +336,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_WEREWOLFS; i++) {
     for (int j = 0; j < PARTS_WEREWOLF; j++) {
-      move_and_face(werewolfs[i][j], werewolves_loc[i], wolf_parts_size[j],
+      move_and_face(werewolfs[i][j], wolf_parts_size[j],
         vec3(werewolf_mult[i], werewolf_mult[i], werewolf_mult[i]), wolf_parts_colors[j],
         wolf_parts_diff[j], vec3(0, werewolf_theta[i], 0)
       );
@@ -367,7 +345,7 @@ void update_everything() {
 
   for (int i = 0; i < NUM_AGENCIES; i++) {
     for (int j = 0; j < PARTS_AGENCIE; j++) {
-      move_and_face(agencies[i][j], agencies_loc[i], agen_parts_size[j],
+      move_and_face(agencies[i][j], agen_parts_size[j],
         vec3(agency_mult[i], agency_mult[i], agency_mult[i]), agen_parts_colors[j],
         agen_parts_diff[j], vec3(0, agency_theta[i], 0)
       );
@@ -383,8 +361,6 @@ void animation(void) {
   GLint nowtime = glutGet(GLUT_ELAPSED_TIME);
   GLint dtime = nowtime - lasttime;
   std::cout << dtime << std::endl;
-
-
 
   set_room(players[0][0].position, players[0][0].size);
 
@@ -448,15 +424,35 @@ void animation(void) {
 
   if (health == 0) death = true;
 
-  if (ghost_chase) { chase(ghosts_loc[0], players[0][0].position, ghost_theta[0], 0.1); }
+  if (ghost_chase) {
+    for (int i = 0; i < NUM_GHOSTS; i++) {
+      for (int j = 0; j < PARTS_GHOST; j++) {
+        ghosts[i][j].chase_(players[0][0].position, 0.1);
+      }
+    }
+  }
 
-  if (agency_chase) { chase(agencies_loc[0], players[0][0].position, agency_theta[0], 0.1); }
+  if (agency_chase) {
+    for (int i = 0; i < NUM_AGENCIES; i++) {
+      for (int j = 0; j < PARTS_AGENCIE; j++) {
+        agencies[i][j].chase_(players[0][0].position, 0.1);
+      }
+    }
+  }
 
-  if (werewolf_chase) { chase(werewolfs[0][1].position, players[0][0].position, werewolf_theta[0], 0.05); }
+  if (werewolf_chase) {
+    for (int i = 0; i < NUM_WEREWOLFS; i++) {
+      for (int j = 0; j < PARTS_WEREWOLF; j++) {
+        werewolfs[i][j].chase_(players[0][0].position, 0.05);
+      }
+    }
+  }
 
   if (zombie_chase) {
     for (int i = 0; i < NUM_ZOMBIES; i++) {
-        chase(zombies_loc[i], players[0][0].position, zombie_theta[i], (i + 1) * 0.05);
+      for (int j = 0; j < PARTS_ZOMBIE; j++) {
+        zombies[i][j].chase_(players[0][0].position, (i + 1) * 0.05);
+      }
     }
   }
 
@@ -644,28 +640,73 @@ void animation(void) {
 
   update_everything();
 
-  for (int i = 0; i < NUM_WEREWOLFS; i++) {
-    for (int j = 0; j < PARTS_WEREWOLF; j++) {
-      werewolfs[i][j].gravity_update();
-    }
-  }
-
   for (int i = 0; i < NUM_PLAYERS; i++) {
     for (int j = 0; j < PARTS_PLAYER; j++) {
       players[i][j].gravity_update();
     }
   }
 
-  // if (jump) {
-  //   players[0][0].velocity.y += 0.75;
-  //   jump = false;
-  //   fall = true;
-  // }
-  // players[0][0].velocity.y -= 0.015;
+  for (int i = 0; i < NUM_ZOMBIES; i++) {
+    for (int j = 0; j < PARTS_ZOMBIE; j++) {
+      zombies[i][j].gravity_update();
+    }
+  }
 
+
+  for (int i = 0; i < NUM_GHOSTS; i++) {
+    for (int j = 0; j < PARTS_GHOST; j++) {
+      ghosts[i][j].gravity_update();
+    }
+  }
+
+  for (int i = 0; i < NUM_WEREWOLFS; i++) {
+    for (int j = 0; j < PARTS_WEREWOLF; j++) {
+      werewolfs[i][j].gravity_update();
+    }
+  }
   for (int i = 0; i < NUM_FLOORS; i++) {
     for (int j = 0; j < PARTS_FLOOR; j++) {
       collision(players[0][0].position, players[0][0].size, players[0][0].velocity, floors[i][j].position, floors[i][j].size, collide[i], 0.0, true, players[0][0].collide);
+    }
+  }
+
+  for (int i = 0; i < NUM_FLOORS; i++) {
+    for (int j = 0; j < PARTS_FLOOR; j++) {
+      for (int k = 0; k < NUM_ZOMBIES; k++) {
+        for (int l = 0; l < PARTS_ZOMBIE; l++) {
+          collision(zombies[k][l].position, players[0][0].size, zombies[k][l].velocity, floors[i][j].position, floors[i][j].size, collide[i], 0.0, true, zombies[k][l].collide);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < NUM_FLOORS; i++) {
+    for (int j = 0; j < PARTS_FLOOR; j++) {
+      for (int k = 0; k < NUM_GHOSTS; k++) {
+        for (int l = 0; l < PARTS_GHOST; l++) {
+          collision(ghosts[k][l].position, players[0][0].size, ghosts[k][l].velocity, floors[i][j].position, floors[i][j].size, collide[i], 0.0, true, ghosts[k][l].collide);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < NUM_FLOORS; i++) {
+    for (int j = 0; j < PARTS_FLOOR; j++) {
+      for (int k = 0; k < NUM_WEREWOLFS; k++) {
+        for (int l = 0; l < PARTS_WEREWOLF; l++) {
+          collision(werewolfs[k][l].position, players[0][0].size, werewolfs[k][l].velocity, floors[i][j].position, floors[i][j].size, collide[i], 0.0, true, werewolfs[k][l].collide);
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < NUM_FLOORS; i++) {
+    for (int j = 0; j < PARTS_FLOOR; j++) {
+      for (int k = 0; k < NUM_AGENCIES; k++) {
+        for (int l = 0; l < PARTS_AGENCIE; l++) {
+          collision(agencies[k][l].position, players[0][0].size, agencies[k][l].velocity, floors[i][j].position, floors[i][j].size, collide[i], 0.0, true, agencies[k][l].collide);
+        }
+      }
     }
   }
 
@@ -677,18 +718,10 @@ void animation(void) {
       // collision(players[0][0].position, players[0][0].size, players[0][0].velocity, wall_loc[i], wall_size[i], collide[i]);
     // }
 
-    for (int i = 0; i < NUM_GHOSTS; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, ghosts_loc[i], ghosts_size[i], g_die[i], 0.0, true, filler);
-    }
-    for (int i = 0; i < NUM_ZOMBIES; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, zombies_loc[i], zombies_size[i], p_die[1], 0.0, true, filler);
-    }
-    for (int i = 0; i < NUM_WEREWOLFS; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, werewolves_loc[i], werewolves_size[i], p_die[2], 0.0, true, filler);
-    }
-    for (int i = 0; i < NUM_AGENCIES; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, agencies_loc[i], agencies_size[i], p_die[3], 0.0, true, filler);
-    }
+    for (int i = 0; i < NUM_GHOSTS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, ghosts[i][0].position, players[0][0].size, g_die[i], 0.0, true, filler); }
+    for (int i = 0; i < NUM_ZOMBIES; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, zombies[i][0].position, players[0][0].size, p_die[1], 0.0, true, filler); }
+    for (int i = 0; i < NUM_WEREWOLFS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, werewolfs[i][0].position, players[0][0].size, p_die[2], 0.0, true, filler); }
+    for (int i = 0; i < NUM_AGENCIES; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, agencies[i][0].position, players[0][0].size, p_die[3], 0.0, true, filler); }
 
     for (int i = 0; i < NUM_BULLET; i++) {
       vec3 bullet_adj_pos = vec3(
@@ -697,44 +730,29 @@ void animation(void) {
         bullet[i].z - bullet_dist[i] * sin(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180)
       );
       if (active[i]) {
-        for (int j = 0; j < NUM_ZOMBIES; j++) {
-          collision(bullet_adj_pos, bullet_size, players[0][0].velocity, zombies_loc[j], zombies_size[j], z_die[j], 1.0, false, filler);
-        }
-        for (int j = 0; j < NUM_WEREWOLFS; j++) {
-          collision(bullet_adj_pos, bullet_size, players[0][0].velocity, werewolves_loc[j], werewolves_size[j], w_die[j], 1.0, false, filler);
-        }
-        for (int j = 0; j < NUM_AGENCIES; j++) {
-          collision(bullet_adj_pos, bullet_size, players[0][0].velocity, agencies_loc[j], agencies_size[j], a_die[j], 1.0, false, filler);
-        }
+        for (int j = 0; j < NUM_ZOMBIES; j++) { collision(bullet_adj_pos, bullet_size, players[0][0].velocity, zombies[i][0].position, players[0][0].size, z_die[j], 1.0, false, filler); }
+        for (int j = 0; j < NUM_WEREWOLFS; j++) { collision(bullet_adj_pos, bullet_size, players[0][0].velocity, werewolfs[i][0].position, players[0][0].size, w_die[j], 1.0, false, filler); }
+        for (int j = 0; j < NUM_AGENCIES; j++) { collision(bullet_adj_pos, bullet_size, players[0][0].velocity, agencies[i][0].position, players[0][0].size, a_die[j], 1.0, false, filler); }
       }
     }
 
-    for (int i = 0; i < NUM_GHOSTS; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, ghosts_loc[i], ghosts_size[i], follow[0], 15.0, false, filler);
-    }
-    for (int i = 0; i < NUM_ZOMBIES; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, zombies_loc[i], zombies_size[i], follow[1], 20.0, false, filler);
-    }
-    for (int i = 0; i < NUM_WEREWOLFS; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, werewolves_loc[i], werewolves_size[i], follow[2], 30.0, false, filler);
-    }
-    for (int i = 0; i < NUM_AGENCIES; i++) {
-      collision(players[0][0].position, players[0][0].size, players[0][0].velocity, agencies_loc[i], agencies_size[i], follow[3], 25.0, false, filler);
-    }
+    for (int i = 0; i < NUM_GHOSTS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, ghosts[i][0].position, players[0][0].size, follow[0], 15.0, false, filler); }
+    for (int i = 0; i < NUM_ZOMBIES; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, zombies[i][0].position, players[0][0].size, follow[1], 20.0, false, filler); }
+    for (int i = 0; i < NUM_WEREWOLFS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, werewolfs[i][0].position, players[0][0].size, follow[2], 30.0, false, filler); }
+    for (int i = 0; i < NUM_AGENCIES; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, agencies[i][0].position, players[0][0].size, follow[3], 25.0, false, filler); }
 
   }
 
-  for (int i = 0; i < NUM_FLOORS; i++) {
-    for (int j = 0; j < PARTS_FLOOR; j++) {
-      for (int k = 0; k < NUM_WEREWOLFS; k++) {
-        for (int l = 0; l < PARTS_WEREWOLF; l++) {
-          werewolfs[k][l].collision(floors[i][j].position, floors[i][j].size, robot_collision, 0.0, false);
-        }
-      }
-    }
-  }
+  // for (int i = 0; i < NUM_FLOORS; i++) {
+  //   for (int j = 0; j < PARTS_FLOOR; j++) {
+  //     for (int k = 0; k < NUM_WEREWOLFS; k++) {
+  //       for (int l = 0; l < PARTS_WEREWOLF; l++) {
+  //         werewolfs[k][l].collision(floors[i][j].position, floors[i][j].size, robot_collision, 0.0, false);
+  //       }
+  //     }
+  //   }
+  // }
 
-  // object(pv, model_view, players[0][0].position.x - 5.0 * cos((theta - 0) * M_PI/180), players[0][0].position.y - 0.25, players[0][0].position.z - 5.0 * sin((theta - 0) * M_PI/180), 3.0, 3.0, 10.0, BARREL_R, BARREL_G, BARREL_B, 0, -theta + 90, 0, 0, 0, 0);
 
 
   // for (int i = 0; i < NUM_DOORS; i++) {
@@ -745,49 +763,37 @@ void animation(void) {
   //   collision(players[0][0].position, players[0][0].size, inter_loc[i], inter_size[i], proximal[i]);
   // }
 
-  for (int i = 0; i < NUM_GUNS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, gun_loc[i], pickup_size[0], pickup[0], 1.0, false, filler);
-  }
 
-  for (int i = 0; i < NUM_LAUNCHERS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, launcher_loc[i], pickup_size[8], pickup[8], 1.0, false, filler);
-  }
 
-  for (int i = 0; i < NUM_LASERS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, laser_loc[i], pickup_size[9], pickup[9], 1.0, false, filler);
-  }
+  for (int i = 0; i < NUM_GUNS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, gun_loc[i], pickup_size[0], pickup[0], 1.0, false, filler); }
+  for (int i = 0; i < NUM_LAUNCHERS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, launcher_loc[i], pickup_size[8], pickup[8], 1.0, false, filler); }
+  for (int i = 0; i < NUM_LASERS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, laser_loc[i], pickup_size[9], pickup[9], 1.0, false, filler); }
+  for (int i = 0; i < NUM_VACCUUMS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, vacuum_loc[i], pickup_size[1], pickup[1], 1.0, false, filler); }
+  for (int i = 0; i < NUM_COFFEES; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, coffee_loc[i], pickup_size[3], pickup[3], 1.0, false, filler); }
+  for (int i = 0; i < NUM_BULLETS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, bullet_loc[i], pickup_size[4], pickup[4], 1.0, false, filler); }
+  for (int i = 0; i < NUM_ROCKETS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, rocket_loc[i], pickup_size[5], pickup[5], 1.0, false, filler); }
+  for (int i = 0; i < NUM_HEALTHS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, health_loc[i], pickup_size[6], pickup[6], 1.0, false, filler); }
+  for (int i = 0; i < NUM_SHIELDS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, shield_loc[i], pickup_size[7], pickup[7], 1.0, false, filler); }
+  for (int i = 0; i < NUM_KEYS; i++) { collision(players[0][0].position, players[0][0].size, players[0][0].velocity, key_loc[i], pickup_size[2], pickup[2], 1.0, false, filler); }
 
-  for (int i = 0; i < NUM_VACCUUMS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, vacuum_loc[i], pickup_size[1], pickup[1], 1.0, false, filler);
-  }
 
-  for (int i = 0; i < NUM_COFFEES; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, coffee_loc[i], pickup_size[3], pickup[3], 1.0, false, filler);
-  }
-
-  for (int i = 0; i < NUM_BULLETS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, bullet_loc[i], pickup_size[4], pickup[4], 1.0, false, filler);
-  }
-
-  for (int i = 0; i < NUM_ROCKETS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, rocket_loc[i], pickup_size[5], pickup[5], 1.0, false, filler);
-  }
-
-  for (int i = 0; i < NUM_HEALTHS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, health_loc[i], pickup_size[6], pickup[6], 1.0, false, filler);
-  }
-
-  for (int i = 0; i < NUM_SHIELDS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, shield_loc[i], pickup_size[7], pickup[7], 1.0, false, filler);
-  }
-
-  for (int i = 0; i < NUM_KEYS; i++) {
-    collision(players[0][0].position, players[0][0].size, players[0][0].velocity, key_loc[i], pickup_size[2], pickup[2], 1.0, false, filler);
-  }
 
   for (int i = 0; i < NUM_WEREWOLFS; i++) {
     for (int j = 0; j < PARTS_WEREWOLF; j++) {
       werewolfs[i][j].position_update();
+    }
+  }
+
+  for (int i = 0; i < NUM_ZOMBIES; i++) {
+    for (int j = 0; j < PARTS_ZOMBIE; j++) {
+      zombies[i][j].position_update();
+    }
+  }
+
+
+  for (int i = 0; i < NUM_GHOSTS; i++) {
+    for (int j = 0; j < PARTS_GHOST; j++) {
+      ghosts[i][j].position_update();
     }
   }
 
@@ -797,22 +803,40 @@ void animation(void) {
     }
   }
 
-  // if (!collider[1]) { fall = true; } else { fall = false; }
-  //
-  // for (int i = 0; i < 6; i++) { collider[i] = false; }
-  //
-  // if (!fall) { players[0][0].velocity.y = 0.0; }
-  //
-  // players[0][0].position.x += players[0][0].velocity.x;
-  // players[0][0].position.y += players[0][0].velocity.y;
-  // players[0][0].position.z += players[0][0].velocity.z;
+
+
+  for (int i = 0; i < NUM_PLAYERS; i++) {
+    for (int j = 0; j < PARTS_PLAYER; j++) {
+      players[i][j].check_fall_death();
+    }
+  }
+
+  for (int i = 0; i < NUM_ZOMBIES; i++) {
+    for (int j = 0; j < PARTS_ZOMBIE; j++) {
+      zombies[i][j].check_fall_death();
+    }
+  }
+
+
+  for (int i = 0; i < NUM_GHOSTS; i++) {
+    for (int j = 0; j < PARTS_GHOST; j++) {
+      ghosts[i][j].check_fall_death();
+    }
+  }
+
+  for (int i = 0; i < NUM_WEREWOLFS; i++) {
+    for (int j = 0; j < PARTS_WEREWOLF; j++) {
+      werewolfs[i][j].check_fall_death();
+    }
+  }
+
+
 
   title_bar = " X: " + std::to_string(players[0][0].position.x)
             + " Y: " + std::to_string(players[0][0].position.y)
-            + " Z: " + std::to_string(players[0][0].position.z);
+            + " Z: " + std::to_string(players[0][0].position.z)
+            + " WE: " + std::to_string(werewolfs[0][0].position.y);
             // 0.01 * (time - lasttime)); // + " l:" + std::to_string(l) + " r:" + std::to_string(r) + " f:" + std::to_string(f) + " b:" + std::to_string(b);
-
-  if (players[0][0].position.y < -300.0) { players[0][0].position = vec3(0.0, 40.0, 0.0); }
 
   if (health <= 0) { exit(EXIT_SUCCESS); }
 
