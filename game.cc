@@ -86,9 +86,9 @@ void display(void) {
     if (active[i]) {
       bullet_dist[i] += bullet_speed;
       object(mv, model_view, bullet[i].x - bullet_dist[i] * cos(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet[i].y - bullet_dist[i] * sin(bullet_phi[i] * M_PI/180), bullet[i].z - bullet_dist[i] * sin(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, bullet_color.x, bullet_color.y, bullet_color.z, bullet_phi[i], -bullet_theta[i], bullet_phi[i], 0, 0, 0);
-      std::cout << bullet_dist[i] << std::endl;
+      // std::cout << bullet_dist[i] << std::endl;
       if (bullet_dist[i] >= DRAW_DISTANCE) {
-        std::cout << "deactivate" << std::endl;
+        // std::cout << "REMOVE BULLET" << std::endl;
         active[i] = false;
       }
     }
@@ -102,6 +102,8 @@ void display(void) {
   pv = mat4(1.0);
   glUniformMatrix4fv(camera_view, 1, GL_TRUE, cv);
   glUniformMatrix4fv(projection, 1, GL_TRUE, pv);
+
+
 
   // render_hud(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
 
@@ -133,6 +135,7 @@ void display(void) {
   }
 
   if (get_gun) {
+    std::cout << "display" << std::endl;
     if (clip_size == 25) {
       for (int i = 0; i < magazine; i++) {
         object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, BULLET_R, BULLET_G, BULLET_B, 0, 0, -135, 0, 0, 3);

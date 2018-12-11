@@ -33,6 +33,8 @@ Object rockets[NUM_ROCKETS][PARTS_ROCKET];
 Object healths[NUM_HEALTHS][PARTS_HEALTH];
 Object shields[NUM_SHIELDS][PARTS_SHIELD];
 
+#define NUM_BULLET 100
+
 // #include "models/human.h"
 
 #define AGENCIES      10
@@ -54,6 +56,7 @@ Object ghosts[NUM_GHOSTS][PARTS_GHOST];
 #include "models/gun.h"
 #define NUM_GUNS      1
 Object guns[NUM_GUNS][PARTS_GUN];
+Object gun_hud[NUM_GUNS][PARTS_GUN];
 
 #define KEYS          15
 #include "models/key.h"
@@ -134,16 +137,36 @@ vec3 key_loc[NUM_KEYS] = {
 };
 
 
-GLfloat gun_mult[NUM_GUNS] = { 1.0 },
-        launcher_mult[NUM_LAUNCHERS] = { 1.0 },
-        laser_mult[NUM_LASERS] = { 1.0 },
-        vacuum_mult[NUM_VACCUUMS] = { 1.0 },
-        coffee_mult[NUM_COFFEES] = { 1.0 },
-        bullet_mult[NUM_BULLETS] = { 1.0 },
-        rocket_mult[NUM_ROCKETS] = { 1.0 },
-        health_mult[NUM_HEALTHS] = { 1.0 },
-        shield_mult[NUM_SHIELDS] = { 1.0 },
-        key_mult[NUM_KEYS] = { 1.0 };
+vec3 gun_mult[NUM_GUNS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 launcher_mult[NUM_LAUNCHERS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 laser_mult[NUM_LASERS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 vacuum_mult[NUM_VACCUUMS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 coffee_mult[NUM_COFFEES] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 bullet_mult[NUM_BULLETS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 rocket_mult[NUM_ROCKETS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 health_mult[NUM_HEALTHS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 shield_mult[NUM_SHIELDS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 key_mult[NUM_KEYS] = {
+  vec3(1.0, 1.0, 1.0)
+};
 
 // ENEMIES //
 
@@ -171,10 +194,18 @@ GLfloat agency_theta[NUM_AGENCIES] = { 0.0 };
 GLfloat werewolf_theta[NUM_WEREWOLFS] = { 0.0 };
 GLfloat zombie_theta[NUM_ZOMBIES] = { 0.0 };
 
-GLfloat ghost_mult[NUM_GHOSTS] = { 1.0 },
-        agency_mult[NUM_AGENCIES] = { 1.0 },
-        zombie_mult[NUM_ZOMBIES] = { 1.0, 1.0, 1.0 },
-        werewolf_mult[NUM_WEREWOLFS] = { 1.0 };
+vec3 ghost_mult[NUM_GHOSTS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 agency_mult[NUM_AGENCIES] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 zombie_mult[NUM_ZOMBIES] = {
+  vec3(1.0, 1.0, 1.0)
+};
+vec3 werewolf_mult[NUM_WEREWOLFS] = {
+  vec3(1.0, 1.0, 1.0)
+};
 
 
 
@@ -198,6 +229,7 @@ void load (mat4 mv, GLuint model_view) {
         vec3(50.0, ROOF_H, 50.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
         vec3(0.0, 0.0, 0.0),
+        vec3(0.0, 0.0, 0.0),
         0, 0, 0, Object::wood
       );
 
@@ -206,23 +238,27 @@ void load (mat4 mv, GLuint model_view) {
         vec3(ROOF_W / 4, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
         vec3(0, 0, 0),
+        vec3(0.0, 0.0, 0.0),
         0, 0, 0, Object::wood);
       floors[2][j].create(mv, model_view,
         vec3(-37.5, -2.5, 0.0),
         vec3(ROOF_W / 4, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
         vec3(0, 0, 0),
+        vec3(0.0, 0.0, 0.0),
         0, 0, 0, Object::wood);
       floors[3][j].create(mv, model_view,
         vec3(0.0, -2.5, 37.5),
         vec3(10.0, ROOF_H, ROOF_D / 4),
         vec3(ROOF_R, ROOF_G, ROOF_B),
         vec3(0, 0, 0),
+        vec3(0.0, 0.0, 0.0),
         0, 0, 0, Object::wood);
       floors[4][j].create(mv, model_view,
         vec3(0.0, -2.5, -37.5),
         vec3(10.0, ROOF_H, ROOF_D / 4),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
 
@@ -230,24 +266,28 @@ void load (mat4 mv, GLuint model_view) {
         vec3(50.0, 7.5, 50.0),
         vec3(25.0, ROOF_H, 25.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[6][j].create(mv, model_view,
         vec3(-50.0, 7.5, 50.0),
         vec3(25.0, ROOF_H, 25.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3( 0, 0, 0),
         0, 0, 0, Object::wood);
       floors[7][j].create(mv, model_view,
         vec3(-50.0, 7.5, -50.0),
         vec3(25.0, ROOF_H, 25.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[8][j].create(mv, model_view,
         vec3(50.0, 7.5, -50.0),
         vec3(25.0, ROOF_H, 25.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
 
@@ -255,24 +295,28 @@ void load (mat4 mv, GLuint model_view) {
         vec3(0.0, -10.0, 75.0),
         vec3(ROOF_W, ROOF_H, 20.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[10][j].create(mv, model_view,
         vec3(0.0, -10.0, -75.0),
         vec3(ROOF_W, ROOF_H, 20.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[11][j].create(mv, model_view,
         vec3(75.0, -10.0, 0.0),
         vec3(20.0, ROOF_H, ROOF_D),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[12][j].create(mv, model_view,
         vec3(-75.0, -10.0, 0.0),
         vec3(20.0, ROOF_H, ROOF_D),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
 
@@ -280,24 +324,28 @@ void load (mat4 mv, GLuint model_view) {
         vec3(42.5, -15.0, 0.0),
         vec3(ROOF_W / 4, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[14][j].create(mv, model_view,
         vec3(-42.5, -15.0, 0.0),
         vec3(ROOF_W / 4, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[15][j].create(mv, model_view,
         vec3(0.0, -15.0, 42.5),
         vec3(10.0, ROOF_H, ROOF_D / 4),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
       floors[16][j].create(mv, model_view,
         vec3(0.0, -15.0, -42.5),
         vec3(10.0, ROOF_H, ROOF_D / 4),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
 
@@ -305,6 +353,7 @@ void load (mat4 mv, GLuint model_view) {
         vec3(-50.0 + FLOOR_SIZE / 2, -20.0, -50.0 + FLOOR_SIZE / 2),
         vec3(10.0, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
 
@@ -312,6 +361,7 @@ void load (mat4 mv, GLuint model_view) {
         vec3(-50.0 + FLOOR_SIZE / 2, 15.0, -50.0 + FLOOR_SIZE / 2),
         vec3(10.0, ROOF_H, 10.0),
         vec3(ROOF_R, ROOF_G, ROOF_B),
+        vec3(0.0, 0.0, 0.0),
         vec3(0, 0, 0),
         0, 0, 0, Object::wood);
     }
@@ -340,88 +390,84 @@ void load (mat4 mv, GLuint model_view) {
     vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
   };
 
-  // ghosts_loc[0] = vec3(ghost_loc.x*ghost_mult[0], ghost_height[0]*ghost_mult[0], ghost_loc.z*ghost_mult[0]);
-  ghosts_size[0] = vec3(GHOST_W*ghost_mult[0], GHOST_H*ghost_mult[0], GHOST_D*ghost_mult[0]);
-  for(int i = 0; i < NUM_ZOMBIES; i++) {
-    zombies_size[i] = vec3(ZOMBIE_W*zombie_mult[i], ZOMBIE_H*zombie_mult[i], ZOMBIE_D*zombie_mult[i]);
-  }
-  // werewolves_loc[0] = vec3(werewolf_loc[0].x*werewolf_mult[0], werewolf_loc[0].y*werewolf_mult[0], werewolf_loc[0].z*werewolf_mult[0]);
-  werewolves_size[0] = vec3(ZOMBIE_W*werewolf_mult[0], ZOMBIE_H*werewolf_mult[0], ZOMBIE_D*werewolf_mult[0]);
-  agencies_size[0] = vec3(ZOMBIE_W*agency_mult[0], ZOMBIE_H*agency_mult[0], ZOMBIE_D*agency_mult[0]);
-
   for (int i = 0; i < NUM_GUNS; i++) {
     for (int j = 0; j < PARTS_GUN; j++) {
-      guns[i][j].create(mv, model_view, gun_loc[i], gun_parts_size[j], gun_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      guns[i][j].create(mv, model_view, gun_loc[i], gun_parts_size[j], gun_parts_colors[j], gun_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+    }
+  }
+  for (int i = 0; i < NUM_GUNS; i++) {
+    for (int j = 0; j < PARTS_GUN; j++) {
+      gun_hud[i][j].create(mv, model_view, vec3(0, 0, -10), gun_parts_size[j], gun_parts_colors[j], gun_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_LAUNCHERS; i++) {
     for (int j = 0; j < PARTS_LAUNCHER; j++) {
-      launchers[i][j].create(mv, model_view, launcher_loc[i], launcher_parts_size[j], launcher_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      launchers[i][j].create(mv, model_view, launcher_loc[i], launcher_parts_size[j], launcher_parts_colors[j], launcher_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_LASERS; i++) {
     for (int j = 0; j < PARTS_LASER; j++) {
-      lasers[i][j].create(mv, model_view, laser_loc[i], laser_parts_size[j], laser_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      lasers[i][j].create(mv, model_view, laser_loc[i], laser_parts_size[j], laser_parts_colors[j], laser_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_VACCUUMS; i++) {
     for (int j = 0; j < PARTS_VACCUUM; j++) {
-      vaccuums[i][j].create(mv, model_view, vacuum_loc[i], vacuum_parts_size[j], vacuum_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      vaccuums[i][j].create(mv, model_view, vacuum_loc[i], vacuum_parts_size[j], vacuum_parts_colors[j], vacuum_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_COFFEES; i++) {
     for (int j = 0; j < PARTS_COFFEE; j++) {
-      coffees[i][j].create(mv, model_view, coffee_loc[i], coffee_parts_size[j], coffee_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      coffees[i][j].create(mv, model_view, coffee_loc[i], coffee_parts_size[j], coffee_parts_colors[j], coffee_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_BULLETS; i++) {
     for (int j = 0; j < PARTS_BULLET; j++) {
-      bullets[i][j].create(mv, model_view, bullet_loc[i], bullet_parts_size[j], bullet_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      bullets[i][j].create(mv, model_view, bullet_loc[i], bullet_parts_size[j], bullet_parts_colors[j], bullet_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_ROCKETS; i++) {
     for (int j = 0; j < PARTS_ROCKET; j++) {
-      rockets[i][j].create(mv, model_view, rocket_loc[i], rocket_parts_size[j], rocket_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      rockets[i][j].create(mv, model_view, rocket_loc[i], rocket_parts_size[j], rocket_parts_colors[j], rocket_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_HEALTHS; i++) {
     for (int j = 0; j < PARTS_HEALTH; j++) {
-      healths[i][j].create(mv, model_view, health_loc[i], health_parts_size[j], health_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      healths[i][j].create(mv, model_view, health_loc[i], health_parts_size[j], health_parts_colors[j], health_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_SHIELDS; i++) {
     for (int j = 0; j < PARTS_SHIELD; j++) {
-      shields[i][j].create(mv, model_view, shield_loc[i], shield_parts_size[j], shield_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      shields[i][j].create(mv, model_view, shield_loc[i], shield_parts_size[j], shield_parts_colors[j], shield_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_KEYS; i++) {
     for (int j = 0; j < PARTS_KEY; j++) {
-      keys[i][j].create(mv, model_view, key_loc[i], key_parts_size[j], key_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      keys[i][j].create(mv, model_view, key_loc[i], key_parts_size[j], key_parts_colors[j], key_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_GHOSTS; i++) {
     for (int j = 0; j < PARTS_GHOST; j++) {
-      ghosts[i][j].create(mv, model_view, ghosts_loc[i], ghost_parts_size[j], ghost_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      ghosts[i][j].create(mv, model_view, ghosts_loc[i], ghost_parts_size[j], ghost_parts_colors[j], ghost_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_ZOMBIES; i++) {
     for (int j = 0; j < PARTS_ZOMBIE; j++) {
-      zombies[i][j].create(mv, model_view, zombies_loc[i], zomb_parts_size[j], zomb_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      zombies[i][j].create(mv, model_view, zombies_loc[i], zomb_parts_size[j], zomb_parts_colors[j], zomb_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_WEREWOLFS; i++) {
     for (int j = 0; j < PARTS_WEREWOLF; j++) {
-      werewolfs[i][j].create(mv, model_view, werewolves_loc[i], wolf_parts_size[j], wolf_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      werewolfs[i][j].create(mv, model_view, werewolves_loc[i], wolf_parts_size[j], wolf_parts_colors[j], wolf_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_AGENCIES; i++) {
     for (int j = 0; j < PARTS_AGENCIE; j++) {
-      agencies[i][j].create(mv, model_view, agencies_loc[i], agen_parts_size[j], agen_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      agencies[i][j].create(mv, model_view, agencies_loc[i], agen_parts_size[j], agen_parts_colors[j], agen_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
   for (int i = 0; i < NUM_PLAYERS; i++) {
     for (int j = 0; j < PARTS_PLAYER; j++) {
-      players[i][j].create(mv, model_view, vec3(0.0, 20.0, 0.0), vec3(PLAYER_W, PLAYER_H, PLAYER_D), agen_parts_colors[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      players[i][j].create(mv, model_view, vec3(0.0, 20.0, 0.0), vec3(PLAYER_W, PLAYER_H, PLAYER_D), agen_parts_colors[j], agen_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
 

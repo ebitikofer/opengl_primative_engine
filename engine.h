@@ -24,7 +24,6 @@
 #define RATE_CAMERA_V	2
 
 #define NUM_OBJECTS	44
-#define NUM_BULLET 100
 #define NUM_DOORS	11
 #define NUM_BOOKCASE	10
 #define NUM_ENEMIES	4
@@ -63,8 +62,6 @@ GLfloat fovy = 70.0;  // Field-of-view in Y direction angle (in degrees)
 GLfloat zNear = 0.5;  // Near clipping plane
 GLfloat zFar = 250.0; // Far clipping plane
 GLfloat aspect;       // Viewport aspect ratio
-
-const GLfloat dr = 5.0; // 5.0 * DegreesToRadians;
 
 // Viewing transformation parameters
 GLfloat radius = 0.0;

@@ -19,7 +19,7 @@ class Object {
 
     ~Object() {}
 
-    void create (mat4 matr, GLuint unif, vec3 movement, vec3 growth, vec3 interpolation, vec3 heading, int sli, int sta, int typ, material mater) {
+    void create (mat4 matr, GLuint unif, vec3 movement, vec3 growth, vec3 interpolation, vec3 offcenter, vec3 heading, int sli, int sta, int typ, material mater) {
 
       left = 0.0; right = 0.0;
       up = 0.0; down = 0.0;
@@ -34,34 +34,52 @@ class Object {
       color = interpolation;
       rotation = heading;
 
+      offset = offcenter;
+
+      adjustment = vec3(offset.z * cos((rotation.y + offset.x) * M_PI/180), offset.y, offset.z * sin((rotation.y + offset.x) * M_PI/180));
+
+      velocity = vec3(0.0, 0.0, 0.0);
+      accelaration = vec3(0.0, 0.0, 0.0);
+
       sl = sli; st = sta;
       type = typ;
 
+      health = 100;
+
       switch (mater) {
+
         case 0:
+
           material_ambient = vec4(1.0, 1.0, 1.0, 1.0);
           material_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
           material_specular = vec4(1.0, 1.0, 1.0, 1.0);
           material_shininess = 10.0;
           break;
+
         case 1:
+
           material_ambient = vec4(1.0, 1.0, 1.0, 1.0);
           material_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
           material_specular = vec4(1.0, 1.0, 1.0, 1.0);
           material_shininess = 40.0;
           break;
+
         case 2:
+
           material_ambient = vec4(1.0, 1.0, 1.0, 1.0);
           material_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
           material_specular = vec4(1.0, 1.0, 1.0, 1.0);
           material_shininess = 70.0;
           break;
+
         case 3:
+
           material_ambient = vec4(1.0, 1.0, 1.0, 1.0);
           material_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
           material_specular = vec4(1.0, 1.0, 1.0, 1.0);
           material_shininess = 50.0;
           break;
+
       }
     }
 
@@ -189,28 +207,36 @@ class Object {
         glUniform4fv(Material_Emiss, 1, emissive[0]);
 
         mat4 instance = (
-          Translate( position.x, position.y, position.z )
+          Translate( position.x + adjustment.x, position.y + adjustment.y, position.z + adjustment.z )
           * RotateX(rotation.x) * RotateY(rotation.y) * RotateZ(rotation.z)
         );
 
         // mat4 instance = (Translate( 0.0, 0.5 * PART_HEIGHT, 0.0 ) * Scale( PART_WIDTH, PART_HEIGHT, PART_WIDTH ) );
 
         switch (type) {
+
           case 0:
+
             glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
             glUniform1f( enable, 0.0 );
             glDrawArrays( GL_TRIANGLES, 0, NumVertices ); break;
+
           // case 1:
+
           //   glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance );
           //   glUniform1f( enable, 2.0 );
           //   gluCylinder(qobj, w, d, h, sl, st); break;
+
           case 2:
+
             glUniform4fv(Material_Emiss, 1, emissive[1]);
-              glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
-              glUniform1f( enable, 1.0 );
-              glDrawArrays( GL_TRIANGLES, NumVertices, NumVertices2 );
+            glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
+            glUniform1f( enable, 1.0 );
+            glDrawArrays( GL_TRIANGLES, NumVertices, NumVertices2 );
             glUniform4fv(Material_Emiss, 1, emissive[0]); break;
+
           case 4:
+
             glUniformMatrix4fv( uniform, 1, GL_TRUE, matrix * instance * Scale( size.x, size.y, size.z ) );
             glUniform1f( enable, 0.0 );
             glDrawArrays( GL_TRIANGLES, 0, NumVertices / 6 ); break;
@@ -232,9 +258,12 @@ class Object {
 
     void collision (vec3 loc, vec3 bound, bool &result, float margin, bool is_collision) {
 
-      if (position.x - size.x / 2 < loc.x + (bound.x + margin) / 2 && position.x + size.x / 2 > loc.x - (bound.x + margin) / 2 &&
-          position.y - size.y / 2 < loc.y + (bound.y + margin) / 2 && position.y + size.y / 2 > loc.y - (bound.y + margin) / 2 &&
-          position.z - size.z / 2 < loc.z + (bound.z + margin) / 2 && position.z + size.z / 2 > loc.z - (bound.z + margin) / 2 ) {
+      if (position.x - size.x / 2 < loc.x + (bound.x + margin) / 2 &&
+          position.x + size.x / 2 > loc.x - (bound.x + margin) / 2 &&
+          position.y - size.y / 2 < loc.y + (bound.y + margin) / 2 &&
+          position.y + size.y / 2 > loc.y - (bound.y + margin) / 2 &&
+          position.z - size.z / 2 < loc.z + (bound.z + margin) / 2 &&
+          position.z + size.z / 2 > loc.z - (bound.z + margin) / 2 ) {
 
         result = true;
 
@@ -266,7 +295,29 @@ class Object {
 
     }
 
-    void chase_(vec3 chased, float speed) {
+    // void display_rotation (GLfloat display) {
+    //   rotation.y = display;
+    // }
+
+    void flying_stuff (vec3 center_loc, vec3 rot) {
+      // position = vec3(position.x + center_loc.z * cos((rot.y + center_loc.x) * M_PI/180), position.y + center_loc.y, position.z + center_loc.z * sin((rot.y + center_loc.x) * M_PI/180));
+      // rotation = vec3(rot.x, -rot.y, rot.z);
+    }
+
+    void move_and_face (vec3 rot) {
+      adjustment = vec3(offset.z * cos((rot.y + offset.x) * M_PI/180), offset.y, offset.z * sin((rot.y + offset.x) * M_PI/180));
+      rotation = vec3(rot.x, -rot.y, rot.z);
+    }
+
+    void grow_shrink (vec3 growth) {
+      size = vec3(size.x * growth.x, size.y * growth.y, size.z * growth.z);
+    }
+
+    void change_color (vec3 interpolation) {
+      color = vec3(interpolation.x, interpolation.y, interpolation.z);
+    }
+
+    void chase_ (vec3 chased, float speed) {
 
       float x_len = 0, y_len = 0;
 
@@ -286,16 +337,14 @@ class Object {
 
     }
 
-    void loop_reset() {
+    void loop_reset () {
 
       velocity.x = 0.0;
       velocity.z = 0.0;
 
     }
 
-    // void delete();
-
-    void gravity_update() {
+    void gravity_update () {
 
       if (!fall) { velocity.y = 0.0; }
 
@@ -309,11 +358,16 @@ class Object {
 
     }
 
-    void position_update() {
+    void position_update () {
 
-      if (!collide) { fall = true; } else { fall = false; }
+      if (!collide) { fall = true; }
+      else { fall = false; }
 
       collide = false;
+
+      velocity.x += accelaration.x;
+      velocity.y += accelaration.y;
+      velocity.z += accelaration.z;
 
       position.x += velocity.x;
       position.y += velocity.y;
@@ -328,6 +382,8 @@ class Object {
       if (position.y < -300.0) { position = vec3(0.0, 40.0, 0.0); }
     }
 
+    // void delete();
+
     std::string name;
     mat4  transform;
     // void  (*render)( void );
@@ -341,11 +397,14 @@ class Object {
     float  material_shininess;
     GLuint uniform;
     vec3 position;
+    vec3 offset;
+    vec3 adjustment;
     vec3 velocity;
     vec3 accelaration;
     vec3 size;
     vec3 color;
     vec3 rotation;
+    vec3 difference;
     int sl;
     int st;
     GLfloat weight;
