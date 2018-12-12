@@ -376,7 +376,7 @@ class Object {
       velocity.x = 0.0;
       velocity.z = 0.0;
 
-      if (health == 0) {
+      if (health <= 0) {
         position = vec3(100.0, 100.0, 100.0);
       }
 
