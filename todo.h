@@ -10,7 +10,7 @@ top right score hud representation
 
 
 fire mode switching
-  laser charge
+  // laser charge
   laser recharge
   rocket reload
   tracker reload
@@ -51,19 +51,19 @@ explosions?
 
 guns
   - uzi
-    + damage agency a lot
-    + damage zombie a little
-    + will not damage robot
+    // + damage agency a lot
+    // + damage zombie a little
+    // + will not damage robot
     + will not damage ghost
   - RPGs
-    + damage agency alot
-    + damage zombie alot
-    + damage robot alot
+    // + damage agency alot
+    // + damage zombie alot
+    // + damage robot alot
     + will not damage ghost
   - laser
-    + damage agency alot
-    + damage zombie alot
-    + damage robot a little
+    // + damage agency alot
+    // + damage zombie alot
+    // + damage robot a little
     + damage ghost a little
   - vacuum
     + will only affect the ghost but it is a one hit kill
@@ -76,8 +76,8 @@ guns
           medium speed
           large bullet store
           fire modes
-            auto
-            semi-auto
+            // auto
+            // semi-auto
         rocket launcher
           large bullets
           slow speed
@@ -91,7 +91,7 @@ guns
           fast speed
           infinite ammo
           fire modes
-            discharge mode where the laser fires like a regular gun and recharges its ammo store
+            // discharge mode where the laser fires like a regular gun and recharges its ammo store
             charge mode where the player charges the laser and it releases a burst of energy when fired
         vacuum
           no damage

@@ -90,48 +90,49 @@ Object zombies[NUM_ZOMBIES][PARTS_ZOMBIE];
 
 bool render_[LAUNCHERS + 1];
 
+
+// PLAYER //
+
+vec3 players_loc[NUM_PLAYERS] = {
+  vec3(0.0, 20.0, 0.0)
+};
+vec3 players_size[NUM_PLAYERS] = { vec3(0.0, 0.0, 0.0) };
+GLfloat player_theta[NUM_PLAYERS] = { 0.0 };
+vec3 player_mult[NUM_PLAYERS] = {
+  vec3(1.0, 1.0, 1.0)
+};
+
+
+
 // PICKUPS //
 
 vec3 gun_loc[NUM_GUNS] = {
   vec3(50.0, 10.0, 50.0)
 };
-
 vec3 launcher_loc[NUM_LAUNCHERS] = {
   vec3(-50.0, 10.0, 50.0)
 };
-
 vec3 laser_loc[NUM_LASERS] = {
   vec3(50.0, 10.0, -50.0)
 };
-
 vec3 vacuum_loc[NUM_VACCUUMS] = {
   vec3(-50.0, 10.0, -50.0)
 };
-
-
-
 vec3 coffee_loc[NUM_COFFEES] = {
   vec3(0.0, 0.0, 0.0)
 };
-
 vec3 bullet_loc[NUM_BULLETS] = {
   vec3(0.0, 0.0, 55.0)
 };
-
 vec3 rocket_loc[NUM_ROCKETS] = {
   vec3(0.0, 0.0, -55.0)
 };
-
 vec3 health_loc[NUM_HEALTHS] = {
   vec3(55.0, 0.0, 0.0)
 };
-
 vec3 shield_loc[NUM_SHIELDS] = {
   vec3(-55.0, 0.0, 0.0)
 };
-
-
-
 vec3 key_loc[NUM_KEYS] = {
   vec3(0.0, -17.5, 0.0)
 };
@@ -168,23 +169,25 @@ vec3 key_mult[NUM_KEYS] = {
   vec3(1.0, 1.0, 1.0)
 };
 
+
+
 // ENEMIES //
 
-vec3 ghosts_loc[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
+vec3 ghosts_loc[NUM_GHOSTS] = {
+  vec3(-20.0, ghost_height[0], 20.0)
+};
 vec3 zombies_loc[NUM_ZOMBIES] = {
-  vec3(10.0, zombie_height[0], 25.0),
-  vec3(10.0, zombie_height[0], 35.0),
-  vec3(15.0, zombie_height[0], 32.5)
+  vec3(20.0, zombie_height[0], 10.0),
+  vec3(20.0, zombie_height[0], 20.0),
+  vec3(10.0, zombie_height[0], 20.5)
 };
 vec3 werewolves_loc[NUM_WEREWOLFS] = {
-  vec3(10.0, 10.0, 25.0),
+  vec3(-20.0, 10.0, -20.0),
 };
 vec3 agencies_loc[NUM_AGENCIES] = {
-  vec3(-51.0, 0.0, 10.0)
+  vec3(20.0, 0.0, -20.0)
 };
-vec3 ghosts_size[NUM_GHOSTS] = {
-  vec3(-17.5, ghost_height[0], -5.0)
-};
+vec3 ghosts_size[NUM_GHOSTS] = { vec3(0.0, 0.0, 0.0) };
 vec3 zombies_size[NUM_ZOMBIES] = { vec3(0.0, 0.0, 0.0) };
 vec3 werewolves_size[NUM_WEREWOLFS] = { vec3(0.0, 0.0, 0.0) };
 vec3 agencies_size[NUM_AGENCIES] = { vec3(0.0, 0.0, 0.0) };
@@ -374,22 +377,6 @@ void load (mat4 mv, GLuint model_view) {
   //   }
   // }
 
-  vec3 ghost_parts_diff[PARTS_GHOST] = {
-    vec3(ghosts_loc[0].x, ghost_height[0] + 0.5, ghosts_loc[0].z),
-    vec3(ghosts_loc[0].x, ghost_height[1] + 0.0, ghosts_loc[0].z),
-    vec3(ghosts_loc[0].x + 0.5 * cos(105 * M_PI/180), ghost_height[2] - 1.0, ghosts_loc[0].z + 0.5 * sin(105 * M_PI/180)),
-    vec3(ghosts_loc[0].x + 0.5 * cos(225 * M_PI/180), ghost_height[3] - 1.0, ghosts_loc[0].z + 0.5 * sin(225 * M_PI/180)),
-    vec3(ghosts_loc[0].x + 0.5 * cos(345 * M_PI/180), ghost_height[4] - 1.0, ghosts_loc[0].z + 0.5 * sin(345 * M_PI/180))
-  };
-
-  vec3 ghost_parts_size[PARTS_GHOST] = {
-    vec3(ghosts_size[0].x, ghosts_size[0].y, ghosts_size[0].z),
-    vec3(ghosts_size[0].x*1.25, ghosts_size[0].y*1.25, ghosts_size[0].z*1.25),
-    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
-    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
-    vec3(ghosts_size[0].x/2, ghosts_size[0].y/2, ghosts_size[0].z/2),
-  };
-
   for (int i = 0; i < NUM_GUNS; i++) {
     for (int j = 0; j < PARTS_GUN; j++) {
       guns[i][j].create(mv, model_view, gun_loc[i], gun_parts_size[j], gun_parts_colors[j], gun_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
@@ -467,7 +454,7 @@ void load (mat4 mv, GLuint model_view) {
   }
   for (int i = 0; i < NUM_PLAYERS; i++) {
     for (int j = 0; j < PARTS_PLAYER; j++) {
-      players[i][j].create(mv, model_view, vec3(0.0, 20.0, 0.0), vec3(PLAYER_W, PLAYER_H, PLAYER_D), agen_parts_colors[j], agen_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
+      players[i][j].create(mv, model_view, players_loc[i], player_parts_size[j], player_parts_colors[j], player_parts_diff[j], vec3(0, 0, 0), 0, 0, 0, Object::metal);
     }
   }
 

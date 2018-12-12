@@ -9,12 +9,11 @@
 #include "matstack.h"
 #include "object.h"
 #include "primitives.h"
-#include "input.h"
 #include "models.h"
 
 // Screen dimensions
-#define SCREEN_WIDTH  600
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH  800
+#define SCREEN_HEIGHT 800
 
 // Drawing
 #define DRAW_DISTANCE 69.0
@@ -37,6 +36,9 @@
 MatrixStack mvstack;
 
 enum cardinal{ north, south, east, west };
+
+static int screen_width = SCREEN_WIDTH;
+static int screen_height = SCREEN_HEIGHT;
 
 bool quit;
 
@@ -71,6 +73,17 @@ GLfloat psi = 0.0;
 GLfloat pitch = 3.0;
 GLfloat yaw = 0.0;
 GLfloat roll = 0.0;
+
+bool key_buffer[256] = { false };
+bool spec_buffer[256] = { false };
+
+static int mouse_button;
+static int mouse_button_state;
+bool changed = false;
+int lastX = 0;
+int lastY = 0;
+float xoffset = 0;
+float yoffset = 0;
 
 bool moving = false;
 
@@ -324,6 +337,9 @@ void collision(vec3 &position, vec3 size, vec3 &velocity, vec3 loc, vec3 bound, 
 // myReshape function, reshapes the window when resized
 void reshape (int width, int height) {
 
+  screen_height = height;
+  screen_width = width;
+
   glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -335,13 +351,67 @@ void reshape (int width, int height) {
   // glTranslatef(0.0, 1.2, -5.5);  /* viewing transform  */
   // glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 
-  sc_x = width / 600.0;
-  sc_y = height / 600.0;
+  sc_x = 600.0 / width;
+  sc_y = 600.0 / height;
 
   std::cout << sc_x << std::endl;
   std::cout << sc_y << std::endl;
 
 }
+
+void motion(int x, int y) {
+
+  if ( x < 50 || x > screen_width - 50) {
+
+    lastX = screen_width/2;
+    lastY = screen_height/2;
+    glutWarpPointer(screen_width/2, screen_height/2);
+
+    return;
+
+  } else if (y < 50 || y > screen_height - 50) {
+
+    lastX = screen_width/2;
+    lastY = screen_height/2;
+    glutWarpPointer(screen_width/2, screen_height/2);
+
+    return;
+
+  }
+
+  // if (firstMouse) {
+  //   lastX = x;
+  //   lastY = y;
+  //   firstMouse = false;
+  // }
+
+  xoffset = x - lastX;
+  yoffset = lastY - y;
+
+  lastX = x;
+  lastY = y;
+
+}
+
+void mouse(int button, int state, int x, int y) {
+
+  mouse_button = button;
+  mouse_button_state = state;
+  changed = true;
+
+}
+
+// keyboard function, keyboard callback for key down functionality
+void keyboard(unsigned char key, int x, int y) { key_buffer[key] = true; }
+
+// keyboardUp function, keyboard callback for key up functionality
+void keyboardUp(unsigned char key, int x, int y) { key_buffer[key] = false; }
+
+// special function, special callback for special key down functionality
+void special(int key, int x, int y) { spec_buffer[key] = true; }
+
+// specialUp function, special callback for special key up functionality
+void specialUp(int key, int x, int y) { spec_buffer[key] = false; }
 
 // init function, initializes the drawables and GL_DEPTH_TEST
 void init(int argc, char **argv) {
@@ -362,6 +432,9 @@ void init(int argc, char **argv) {
   glutSpecialFunc(special);
   glutSpecialUpFunc(specialUp);
   glutMouseFunc(mouse);
+  glutPassiveMotionFunc(motion);
+  glutMotionFunc(motion);
+  glutSetCursor(GLUT_CURSOR_NONE);
 
   qobj = gluNewQuadric();
 

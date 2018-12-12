@@ -84,8 +84,13 @@ void display(void) {
 
   for (int i = 0; i < NUM_BULLET; i++) {
     if (active[i]) {
-      bullet_dist[i] += bullet_speed;
-      object(mv, model_view, bullet[i].x - bullet_dist[i] * cos(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet[i].y - bullet_dist[i] * sin(bullet_phi[i] * M_PI/180), bullet[i].z - bullet_dist[i] * sin(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet_size.x, bullet_size.y, bullet_size.z, bullet_color.x, bullet_color.y, bullet_color.z, bullet_phi[i], -bullet_theta[i], bullet_phi[i], 0, 0, 0);
+      bullet_dist[i] += bullet_speed[i];
+      object(mv, model_view,
+        bullet[i].x - bullet_dist[i] * cos(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180), bullet[i].y - bullet_dist[i] * sin(bullet_phi[i] * M_PI/180), bullet[i].z - bullet_dist[i] * sin(bullet_theta[i] * M_PI/180) * cos(bullet_phi[i] * M_PI/180),
+        bullet_size[i].x, bullet_size[i].y, bullet_size[i].z,
+        bullet_color[i].x, bullet_color[i].y, bullet_color[i].z,
+        bullet_phi[i], -bullet_theta[i], bullet_phi[i],
+        0, 0, 0);
       // std::cout << bullet_dist[i] << std::endl;
       if (bullet_dist[i] >= DRAW_DISTANCE) {
         // std::cout << "REMOVE BULLET" << std::endl;
@@ -98,8 +103,10 @@ void display(void) {
 
   // HUD
 
-  cv = mat4(1.0);
-  pv = mat4(1.0);
+  cv = Ortho2D(-1.0, 1.0, -1.0, 1.0);
+  pv = Ortho2D(-1.0, 1.0, -1.0, 1.0);
+  // cv = mat4(1.0);
+  // pv = mat4(1.0);
   glUniformMatrix4fv(camera_view, 1, GL_TRUE, cv);
   glUniformMatrix4fv(projection, 1, GL_TRUE, pv);
 
@@ -134,26 +141,41 @@ void display(void) {
     object(mv, model_view, hp_x - 0.00075 * sc_x + 0.0666 * i, hp_y - 0.085 * sc_y, 0.0, 0.01 * sc_x, 0.03 * sc_y, 0.0, 0.0, 1.0, 1.0, 0, 0, 270, 0, 0, 4);
   }
 
-  if (get_gun) {
-    std::cout << "display" << std::endl;
+  if (get_gun || get_laser || get_launcher) {
     if (clip_size == 25) {
-      for (int i = 0; i < magazine; i++) {
+      for (int i = 0; i < bullet_hud; i++) {
         object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, BULLET_R, BULLET_G, BULLET_B, 0, 0, -135, 0, 0, 3);
         object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 180, 0, 0, 4);
         object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1, 0.1, 0.1, 0, 0, 0, 0, 0, 4);
       }
+      for (int i = 0; i < 25; i++) {
+        object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, BULLET_R*0.1, BULLET_G*0.1, BULLET_B*0.1, 0, 0, -135, 0, 0, 3);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1*0.1, 0.1*0.1, 0.1*0.1, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, 0.1*0.1, 0.1*0.1, 0.1*0.1, 0, 0, 0, 0, 0, 4);
+      }
     } else if (clip_size == 3) {
-      for (int i = 0; i < magazine; i++) {
+      for (int i = 0; i < bullet_hud; i++) {
         object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, -135, 0, 0, 3);
         object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 180, 0, 0, 4);
         object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 0, 0, 0, 4);
         object(mv, model_view, am_x - 0.05 * i - 0.011, am_y, 0.0, 0.05 * sc_y, 0.03 * sc_x, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 90, 0, 0, 4);
         object(mv, model_view, am_x - 0.05 * i + 0.009, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R, ROCKET_G, ROCKET_B, 0, 0, 0, 0, 0, 4);
       }
+      for (int i = 0; i < 3; i++) {
+        object(mv, model_view, am_x - 0.05 * i, am_y + 0.025 * sc_y, 0.0, 0.025 * sc_x, 0.025 * sc_y, 0.0, ROCKET_R*0.1, ROCKET_G*0.1, ROCKET_B*0.1, 0, 0, -135, 0, 0, 3);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R*0.1, ROCKET_G*0.1, ROCKET_B*0.1, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R*0.1, ROCKET_G*0.1, ROCKET_B*0.1, 0, 0, 0, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i - 0.011, am_y, 0.0, 0.05 * sc_y, 0.03 * sc_x, 0.0, ROCKET_R*0.1, ROCKET_G*0.1, ROCKET_B*0.1, 0, 0, 90, 0, 0, 4);
+        object(mv, model_view, am_x - 0.05 * i + 0.009, am_y, 0.0, 0.03 * sc_x, 0.05 * sc_y, 0.0, ROCKET_R*0.1, ROCKET_G*0.1, ROCKET_B*0.1, 0, 0, 0, 0, 0, 4);
+      }
     } else if (clip_size == 100) {
-      for (int i = 0; i < magazine; i++) {
+      for (int i = 0; i < bullet_hud; i++) {
         object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R, LASER_G, LASER_B, 0, 0, 180, 0, 0, 4);
         object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R, LASER_G, LASER_B, 0, 0, 0, 0, 0, 4);
+      }
+      for (int i = 0; i < 100; i++) {
+        object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R*0.1, LASER_G*0.1, LASER_B*0.1, 0, 0, 180, 0, 0, 4);
+        object(mv, model_view, am_x - 0.01 * i, am_y + 0.0125, 0.0, 0.01 * sc_x, 0.06 * sc_y, 0.0, LASER_R*0.1, LASER_G*0.1, LASER_B*0.1, 0, 0, 0, 0, 0, 4);
       }
     }
   }
