@@ -157,7 +157,7 @@ float sc_y = SCREEN_HEIGHT / 600;
 
 void lighting () {
 
-  light_positions[0] = vec4(-65.0, 30.0, -55.0, 1.0); // Position of light1
+  light_positions[0] = vec4(-65.0, 30.0, -55.0, 0.0); // Position of light1
   light_positions[1] = vec4(20.0, 20.0, 20.0, 0.0); // Position of light2 (it will change, so needs to be global).
   //point4 light_position(0.0, 0.0, 1.0, 0.0); // If you want a non-positional light use 0.0 for fourth value
 
