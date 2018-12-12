@@ -23,7 +23,7 @@ void display(void) {
   if (perspective) radius = 6.0;
               else radius = 0.1;
 
-  glutSetWindowTitle(title_bar.c_str());
+  // glutSetWindowTitle(title_bar.c_str());
 
   point4  eye(players[0][0].position.x + radius * cos(theta * M_PI/180) * cos(phi * M_PI/180),
               players[0][0].position.y + radius * sin(phi * M_PI/180),
@@ -109,8 +109,6 @@ void display(void) {
   // pv = mat4(1.0);
   glUniformMatrix4fv(camera_view, 1, GL_TRUE, cv);
   glUniformMatrix4fv(projection, 1, GL_TRUE, pv);
-
-
 
   // render_hud(/*mvstack*/ hurt, hallucinate, aps, dps, sps, light_ambients, light_diffuses, light_speculars, ambient_product, diffuse_product, specular_product, ambient_product2, diffuse_product2, specular_product2, enable, color_a_pink, emissive, Material_Emiss, shiny);
 

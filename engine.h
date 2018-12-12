@@ -12,8 +12,8 @@
 #include "models.h"
 
 // Screen dimensions
-#define SCREEN_WIDTH  800
-#define SCREEN_HEIGHT 800
+#define SCREEN_WIDTH  600
+#define SCREEN_HEIGHT 600
 
 // Drawing
 #define DRAW_DISTANCE 69.0
@@ -157,8 +157,8 @@ float sc_y = SCREEN_HEIGHT / 600;
 
 void lighting () {
 
-  light_positions[0] = vec4(-65.0,  30.0, -55.0, 1.0); // Position of light1
-  light_positions[1] = vec4(12.5, 12.5, -12.5, 0.0); // Position of light2 (it will change, so needs to be global).
+  light_positions[0] = vec4(-65.0, 30.0, -55.0, 1.0); // Position of light1
+  light_positions[1] = vec4(20.0, 20.0, 20.0, 0.0); // Position of light2 (it will change, so needs to be global).
   //point4 light_position(0.0, 0.0, 1.0, 0.0); // If you want a non-positional light use 0.0 for fourth value
 
   // Initialize first light lighting parameters
@@ -423,7 +423,7 @@ void init(int argc, char **argv) {
   glutInit(&argc, argv);
   glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH );
   glutInitWindowSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-  glutCreateWindow( "SEDATIVE FELLA" );
+  glutCreateWindow( "K3YB04RD K1D!" );
   glutReshapeFunc(reshape);
   glewInit();
   glutIgnoreKeyRepeat(1);
